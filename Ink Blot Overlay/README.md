@@ -1,1 +1,0 @@
-A convenient overlay for Windows 10 will help you get quick access to certain functions in a couple of clicks.
