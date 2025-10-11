@@ -1,18 +1,46 @@
 from PyQt6 import uic
 from PyQt6.QtWidgets import QMainWindow, QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame
-from PyQt6.QtCore import Qt, QRectF, QPropertyAnimation, QPoint, QParallelAnimationGroup
+from PyQt6.QtCore import Qt, QRectF, QPropertyAnimation, QPoint, QObject, QTimer
 from PyQt6.QtGui import QPainter, QColor, QBrush, QPainterPath, QPixmap, QPen
-import sys, keyboard, threading, time
+import sys, keyboard
 
 # -- Functions --
 def GetAnimTime(n:float):
     return int(n*1000)
+
+def getHex(rgb):
+    if isinstance(rgb, (list, tuple)) and len(rgb) >= 3:
+        r, g, b = rgb[:3]
+        return f"#{r:02X}{g:02X}{b:02X}"
+    elif isinstance(rgb, str):
+        parts = [int(x) for x in rgb.replace(' ', '').split(',')]
+        return f"#{parts[0]:02X}{parts[1]:02X}{parts[2]:02X}"
+    else:
+        raise ValueError("Error: Unknonw format RGB")
+    
+def addDynamicStyle(obj, style: str):
+    obj.setStyleSheet(style)
+
+    class _StyleWatcher(QObject):
+        def eventFilter(self, watched, event):
+            if watched == obj and event.type() == 105:
+                if event.propertyName().data().decode() == "class":
+                    obj.style().unpolish(obj)
+                    obj.style().polish(obj)
+                    obj.update()
+            return False
+
+    watcher = _StyleWatcher()
+    obj.installEventFilter(watcher)
+    obj._styleWatcher = watcher
+    
 
 # -- Variables --
 Title = "Ink Blot Overlay"
 Size = {"width": 1000, "height": 600}
 BlobsOnScreen = 12
 BorderRadius = 15
+MainWindowOpacity = 0.9
 
 # -- Colors --
 WindowColor = [0, 0, 0, 255]
@@ -45,6 +73,71 @@ menubarStyle = '''
         background-color: rgba(50, 15, 0, 255);
     }
 '''
+menubarTitleStyle = '''
+    QLabel {
+        width: 200px;
+        height: 25px;
+        padding: 5 0;
+        font-size: 14px;
+        font-family: 'Courier New', Courier, monospace;
+        color: rgba(255, 106, 0, 255);
+        background-color: rgba(0, 0, 0, 0);
+    }
+'''
+
+buttonStyle = '''
+    QPushButton {
+        color: rgba(255, 106, 0, 255);
+        background-color: qlineargradient(
+            x1: 0, y1: 0,
+            x2: 0, y2: 1,
+            stop: 0 rgba(50, 25, 0, 255),
+            stop: 1 rgba(30, 15, 0, 255)
+        );
+        border: 1px solid rgba(255, 106, 0, 255);
+        border-radius: 10px;
+        font-family: 'Courier New', Courier, monospace;
+    }
+    QPushButton:hover {
+        background-color: qlineargradient(
+            x1: 0, y1: 0,
+            x2: 0, y2: 1,
+            stop: 0 rgba(70, 35, 0, 255),
+            stop: 1 rgba(40, 20, 0, 255)
+        );
+    }
+    QPushButton:pressed {
+        background-color: qlineargradient(
+            x1: 0, y1: 0,
+            x2: 0, y2: 1,
+            stop: 0 rgba(25, 10, 0, 255),
+            stop: 1 rgba(15, 5, 0, 255)
+        );
+    }
+'''
+
+dinamicTitleStyle = '''
+    QLabel[class='passive'] {
+        width: 200px;
+        height: 25px;
+        padding: 5 0;
+        font-size: 14px;
+        font-family: 'Courier New', Courier, monospace;
+        color: rgb(150, 60, 0);
+        background-color: rgba(0, 0, 0, 0);
+    }
+
+    QLabel[class='active'] {
+        width: 200px;
+        height: 25px;
+        padding: 5 0;
+        font-size: 14px;
+        font-family: 'Courier New', Courier, monospace;
+        color: rgba(255, 106, 0, 255);
+        background-color: rgba(0, 0, 0, 0);
+    }
+'''
+
 
 class ConfirmExitWindow(QWidget):
     def __init__(self, parent=None):
@@ -85,18 +178,7 @@ class ConfirmExitWindow(QWidget):
 
         for btn in (self.btn_yes, self.btn_no):
             btn.setFixedSize(80, 30)
-            btn.setStyleSheet("""
-                QPushButton {
-                    color: rgba(255, 106, 0, 255);
-                    background-color: rgba(30, 30, 30, 255);
-                    border: 1px solid rgba(255, 106, 0, 255);
-                    border-radius: 10px;
-                    font-family: 'Courier New', Courier, monospace;
-                }
-                QPushButton:hover {
-                    background-color: rgba(50, 25, 0, 255);
-                }
-            """)
+            btn.setStyleSheet(buttonStyle)
             btn_layout.addWidget(btn)
 
     def paintEvent(self, event):
@@ -129,7 +211,6 @@ class WidgetSettingWindow(QMainWindow):
     def AddWindow(self, win):
         def onDestroy():
             self.Windows.remove(win) if win in self.Windows else None
-            print(self.Windows)
 
         if win == None:
             return
@@ -147,7 +228,7 @@ class WidgetSettingWindow(QMainWindow):
         self.setCentralWidget(central_widget)
 
         mainLayout = QHBoxLayout(central_widget)
-        mainLayout.setContentsMargins(3, 2, 5, 5)
+        mainLayout.setContentsMargins(2, 2, 2, 2)
         mainLayout.setSpacing(5)
         mainLayout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
 
@@ -165,12 +246,20 @@ class WidgetSettingWindow(QMainWindow):
 
         self.icons = {}
         self.buttons = {}
+        self.uis = {}
 
         mainIconPixmap = QPixmap(mainIcon).scaled(30, 30)
 
         self.icons["mainIcon"] = QLabel(self)
         self.icons["mainIcon"].setPixmap(mainIconPixmap)
         self.iconsLayout.addWidget(self.icons["mainIcon"])
+
+        self.uis["holdAlt"] = QLabel("Hold Alt to drag", parent=self)
+        self.uis["holdAlt"].setProperty("class", "passive")
+
+        addDynamicStyle(self.uis["holdAlt"], dinamicTitleStyle)
+
+        self.menuBarLayout.addWidget(self.uis["holdAlt"], 0, Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignRight)
 
         self.buttons["minimizeButton"] = QPushButton("_")
         self.buttons["minimizeButton"].setStyleSheet(menubarStyle)
@@ -182,6 +271,10 @@ class WidgetSettingWindow(QMainWindow):
         self.buttons["closeButton"].clicked.connect(lambda: self.close())
         self.menuBarLayout.addWidget(self.buttons["closeButton"])
 
+        self.uis["mainTitle"] = QLabel("Ink Blot Overlay - Select Widgets")
+        self.uis["mainTitle"].setStyleSheet(menubarTitleStyle)
+        self.iconsLayout.addWidget(self.uis["mainTitle"])
+
         self.init_ui()
 
     def init_ui(self):
@@ -192,10 +285,30 @@ class WidgetSettingWindow(QMainWindow):
             Qt.WindowType.WindowStaysOnTopHint
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
-        self.setWindowOpacity(0.85)
+        self.setWindowOpacity(MainWindowOpacity)
+
+        QApplication.instance().installEventFilter(self)
 
         self.show()
 
+    def eventFilter(self, obj, event):
+        if event.type() == event.Type.KeyPress:
+            if event.key() == Qt.Key.Key_Alt:
+                if self.uis["holdAlt"].property("class") != "active":
+                    self.uis["holdAlt"].setProperty("class", "active")
+                    self.uis["holdAlt"].style().unpolish(self.uis["holdAlt"])
+                    self.uis["holdAlt"].style().polish(self.uis["holdAlt"])
+                    self.uis["holdAlt"].update()
+
+        elif event.type() == event.Type.KeyRelease:
+            if event.key() == Qt.Key.Key_Alt:
+                if self.uis["holdAlt"].property("class") != "passive":
+                    self.uis["holdAlt"].setProperty("class", "passive")
+                    self.uis["holdAlt"].style().unpolish(self.uis["holdAlt"])
+                    self.uis["holdAlt"].style().polish(self.uis["holdAlt"])
+                    self.uis["holdAlt"].update()
+
+        return super().eventFilter(obj, event)
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -295,21 +408,50 @@ class WidgetSettingWindow(QMainWindow):
         dialog.btn_yes.clicked.connect(yes_clicked)
 
     def showMinimized(self):
-        return super().showMinimized()
+        self.HideAnim = QPropertyAnimation(self, b"windowOpacity")
+        self.HideAnim.setEndValue(0)
+        self.HideAnim.setDuration(GetAnimTime(0.2))
+
+        currentPos = self.pos()
+        self.HideAnimMove = QPropertyAnimation(self, b"pos")
+        self.HideAnimMove.setStartValue(currentPos)
+        self.HideAnimMove.setEndValue(QPoint(currentPos.x(), currentPos.y()+30))
+    
+        QTimer.singleShot(300, lambda: QMainWindow.showMinimized(self))
+
+        self.HideAnimMove.start()
+        self.HideAnim.start()
+
+        
+    def showEvent(self, a0):
+        self.ShowAnim = QPropertyAnimation(self, b"windowOpacity")
+        self.ShowAnim.setStartValue(0)
+        self.ShowAnim.setEndValue(MainWindowOpacity)
+        self.ShowAnim.setDuration(GetAnimTime(0.2))
+
+        currentPos = self.pos()
+        self.ShowAnimMove = QPropertyAnimation(self, b"pos")
+        self.ShowAnimMove.setStartValue(currentPos)
+        self.ShowAnimMove.setEndValue(QPoint(currentPos.x(), currentPos.y()-30))
+
+        self.ShowAnimMove.start()
+        self.ShowAnim.start()
+
+        return super().showEvent(a0)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     settingWindow = WidgetSettingWindow()
     
-    def toggle_window():
-        if len(settingWindow.Windows) > 0:
-            return
+    # def toggle_window():
+    #     if len(settingWindow.Windows) > 0:
+    #         return
         
-        if settingWindow.isVisible():
-            settingWindow.hide()
-        else:
-            settingWindow.show()
+    #     if settingWindow.isVisible():
+    #         settingWindow.hide()
+    #     else:
+    #         settingWindow.show()
 
-    keyboard.add_hotkey("ctrl+alt+\\", toggle_window)
+    # keyboard.add_hotkey("ctrl+alt+\\", toggle_window)
 
     sys.exit(app.exec())
