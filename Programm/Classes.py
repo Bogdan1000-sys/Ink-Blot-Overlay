@@ -1,34 +1,38 @@
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame
 from PyQt6.QtCore import Qt, QRectF, QPropertyAnimation, QPoint, QTimer, pyqtSignal, QEvent
 from PyQt6.QtGui import QPainter, QColor, QBrush, QPainterPath, QPixmap, QPen
-import sys, keyboard, json
+import sys, keyboard, json, math
 
 # -- Services --
 from Services import CollectionService
 
 # -- Functions --
-from Functions import GetQTime, addDynamicStyle, GetAdaptedText
+from Functions import GetQTime, addDynamicStyle, GetAdaptedTextFromDictionary, GetUserSettings
 
 # -- Variables --
-
-# -- Constants --
-with open("Programm/Data/Constants.json", "r", encoding="utf-8") as cFile:
-    Constants = json.load(cFile)
 
 # -- Resources --
 mainIcon = 'Programm/Resources/Images/Ink Blot Icon.png'
 
-# -- Data --
-with open("Programm/Data/Dictionary.json", "r", encoding="utf-8") as dFile:
-    Dictionary = json.load(dFile)
+# -- Constants --
+with open("Programm/Data/Pathes.json", "r", encoding="utf-8") as pFile:
+    Pathes = json.load(pFile)
 
-userSettings = None
-userSettingsPath = "Programm/Data/userSettings.json"
+# -- Data --
+with open(Pathes["Constants"], "r", encoding="utf-8") as cFile:
+    Constants = json.load(cFile)
+with open(Pathes["Data"], "r", encoding="utf-8") as dataFile:
+    Data = json.load(dataFile)
+with open(Pathes["Dictionary"], "r", encoding="utf-8") as dFile:
+    Dictionary = json.load(dFile)
+with open(Pathes["SettingOptions"], "r", encoding="utf-8") as soFile:
+    SettingOptions = json.load(soFile)
+
+UserSettings = GetUserSettings()
+
 def UpdateUserSettings():
-    global userSettings
-    with open(userSettingsPath, "r", encoding="utf-8") as usFile:
-        userSettings = json.load(usFile)
-UpdateUserSettings()
+    global UserSettings
+    UserSettings = GetUserSettings()
 
 # -- Common Styles --
 menubarButtonStyle = '''
@@ -54,7 +58,7 @@ menubarButtonStyle = '''
 
 menubarTextButtonStyle = '''
     QPushButton[class='menubarButton'] {
-        min-width: 100px;
+        min-width: 120px;
         max-width: 200px;
         height: 25 px;
         padding: 0 5px;
@@ -111,10 +115,10 @@ class WidgetButton(QFrame):
         self.Icon.setStyleSheet("background: transparent; border: none; margin-top:1px; margin-left:1px")
         self.Icon.setPixmap(IconPixmap)
 
-        self.nameLabel = QLabel(self._data["data"]["Name"], parent=self)
+        self.nameLabel = QLabel(GetAdaptedTextFromDictionary(self._data["data"]["Name"]), parent=self)
         
         CollectionService.addTag(self.nameLabel, "adaptableTextWidget")
-        self.nameLabel.setProperty("textPath", {"dataBase":"Data", "key":"WidgetsData/"+self._data["data"]["Key"]+"/Name"})
+        self.nameLabel.setProperty("textKey", "widgetNames/"+self._data["data"]["Key"])
 
         self.nameLabel.resize(self._data["size"][0], 30)
         self.nameLabel.move(0, self._data["size"][1]-30)
@@ -145,7 +149,7 @@ class ConfirmExitWindow(QWidget):
         UpdateUserSettings()
         
         self._data = kwargs or {}
-        self._data["language"] = userSettings.get("language", "eng")
+        self._data["language"] = UserSettings.get("language", "eng")
 
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
         self.setWindowModality(Qt.WindowModality.ApplicationModal)
@@ -172,7 +176,7 @@ class ConfirmExitWindow(QWidget):
         self.label = QLabel(Dictionary[self._data["language"]]["labels"]["exitConfirmation"]["Q"])
         
         CollectionService.addTag(self.label, "adaptableTextWidget")
-        self.label.setProperty("textPath", {"dataBase":"Dictionary", "key":"labels/exitConfirmation/Q"})
+        self.label.setProperty("textKey", "labels/exitConfirmation/Q")
 
         self.label.setStyleSheet("color: white; font-size: 14px; font-family: 'Courier New', Courier, monospace;")
         self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -183,10 +187,10 @@ class ConfirmExitWindow(QWidget):
         layout.addLayout(btn_layout)
 
         self.btn_yes = QPushButton(Dictionary[self._data["language"]]["labels"]["exitConfirmation"]["Y"])
-        self.btn_yes.setProperty("textPath", {"dataBase":"Dictionary", "key":"labels/exitConfirmation/Y"})
+        self.btn_yes.setProperty("textKey", "labels/exitConfirmation/Y")
 
         self.btn_no = QPushButton(Dictionary[self._data["language"]]["labels"]["exitConfirmation"]["N"])
-        self.btn_no.setProperty("textPath", {"dataBase":"Dictionary", "key":"labels/exitConfirmation/N"})
+        self.btn_no.setProperty("textKey", "labels/exitConfirmation/N")
 
         CollectionService.addTag(self.btn_yes, "adaptableTextWidget")
         CollectionService.addTag(self.btn_no, "adaptableTextWidget")
@@ -256,12 +260,14 @@ class SettingsWindow(QWidget):
 
         UpdateUserSettings()
 
+        self._menuActive = True
+
         self._data = kwargs or {}
         self._data["Size"] = kwargs.get("Size", [125, 200])
         self._data["Position"] = kwargs.get("Position", QPoint(100, 100))
+        self._data["language"] = UserSettings.get("language", "eng")
         
-        self._data = kwargs or {}
-        self._data["language"] = userSettings.get("language", "eng")
+        self._settingButtons = {}
 
         self.setWindowFlags(Qt.WindowType.Popup | Qt.WindowType.FramelessWindowHint)
         self.setWindowModality(Qt.WindowModality.NonModal)
@@ -272,6 +278,33 @@ class SettingsWindow(QWidget):
         self.resize(*self._data["Size"])
         self.move(self._data["Position"])
         self.setProperty("class", "settingsWindow")
+
+        self.setStyleSheet("""
+            QPushButton[class='settingButton'] {
+                text-align: left;
+                min-width: 98%;
+                max-width: 200px;
+                height: 25 px;
+                padding: 0 5px;
+                font-size: 14px;
+                font-family: 'Courier New', Courier, monospace;
+                color: rgba(255, 106, 0, 255);
+                background-color: rgba(100, 40, 0, 255);
+                border-radius: 10px;
+            }
+                                        
+            QPushButton[class='settingButton']:hover {
+                background-color: rgba(80, 30, 0, 255);
+            }
+
+            QPushButton[class='settingButton']:pressed {
+                background-color: rgba(50, 15, 0, 255);
+            }
+        """)
+
+        self.MainLayout = QVBoxLayout()
+        self.MainLayout.setAlignment(Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignHCenter)
+        self.setLayout(self.MainLayout)
 
         self.showAnim1 = QPropertyAnimation(self, b"windowOpacity")
         self.showAnim1.setStartValue(0)
@@ -293,6 +326,96 @@ class SettingsWindow(QWidget):
         self.hideAnim2.setEndValue(self._data["Position"] + QPoint(0, -5))
         self.hideAnim2.setDuration(GetQTime(0.2))
 
+        self._settingButtons["language"] = QPushButton(Dictionary[self._data["language"]]["settings"]["language"], parent=self)
+        self._settingButtons["language"].setProperty("class", "settingButton")
+        self.MainLayout.addWidget(self._settingButtons["language"])
+
+        for key, button in self._settingButtons.items():
+            arrow = QLabel(">", parent=button)
+            arrow.setProperty("class", "arrow")
+            arrow.resize(15, button.size().height()//2 + button.size().height()//4)
+            arrow.move(button.size().width()-arrow.size().width(), 0)
+            arrow.setStyleSheet("""
+                QLabel[class='arrow'] {
+                    text-align: center;
+                    font-size: 14px;
+                    font-family: 'Courier New', Courier, monospace;
+                    color: rgba(255, 106, 0, 255);
+                }
+            """)
+
+            CollectionService.addTag(button, "adaptableTextWidget")
+            button.setProperty("textKey", "settings/"+key)
+
+            button.OptionsContainer = None
+
+            def makeEnterFunction(name):
+                def enterEvent(event):
+                    if not self._menuActive: return
+
+                    print("Cursor entered:", name)
+
+                    if SettingOptions[name].get("Type") == "carousel":
+                        options = SettingOptions[name].get("Options", [])
+                        print(f"Current options for '{name}':")
+
+                        if button.OptionsContainer is None: 
+                            button.OptionsContainer = QFrame(parent=self.parent())
+                            button.OptionsContainer.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Popup)
+                            
+                            button.OptionsContainer.setProperty("class", "button.OptionsContainer")
+                            optionsLayout = QVBoxLayout()
+                            optionsLayout.setContentsMargins(5, 5, 5, 5)
+                            optionsLayout.setSpacing(5)
+                            button.OptionsContainer.setLayout(optionsLayout)
+
+                            button.OptionsContainer.Animations = {}
+                            button.OptionsContainer.Animations["showAnim"] = QPropertyAnimation(button.OptionsContainer, b"windowOpacity")
+                            button.OptionsContainer.Animations["showAnim"].setStartValue(0)
+                            button.OptionsContainer.Animations["showAnim"].setEndValue(1)
+                            button.OptionsContainer.Animations["showAnim"].setDuration(GetQTime(0.2))
+
+                            button.OptionsContainer.Animations["hideAnim"] = QPropertyAnimation(button.OptionsContainer, b"windowOpacity")
+                            button.OptionsContainer.Animations["hideAnim"].setStartValue(1)
+                            button.OptionsContainer.Animations["hideAnim"].setEndValue(0)
+                            button.OptionsContainer.Animations["hideAnim"].setDuration(GetQTime(0.2))
+                            button.OptionsContainer.Animations["hideAnim"].finished.connect(button.OptionsContainer.deleteLater)
+
+                            button.OptionsContainer.resize(math.floor(button.size().width() * 1.65), len(options) * 30 + 10)
+
+                            button.OptionsContainer.move(button.mapToGlobal(button.rect().topRight()) + QPoint(15, 0))
+
+                            button.OptionsContainer.setStyleSheet("""
+                                QFrame[class='button.OptionsContainer'] {
+                                    background-color: rgba(0, 0, 0, 220);
+                                    border: 1px solid rgba(255, 106, 0, 180);
+                                    border-radius: 10px;
+                                }
+                            """)
+
+                            button.OptionsContainer.Animations["showAnim"].start()
+                            button.OptionsContainer.show()
+                        
+                        button.OptionsContainer.installEventFilter(self)
+                        button.OptionsContainer.buttonRef = button
+                        
+                        for o in options:
+                            print(f" - {o}")
+
+                    return QPushButton.enterEvent(button, event)
+                return enterEvent
+
+            
+            def makeLeaveFunction(name):
+                def leaveEvent(event):
+                    return QPushButton.leaveEvent(button, event)
+                return leaveEvent
+
+            button.enterEvent = makeEnterFunction(key)
+            button.leaveEvent = makeLeaveFunction(key)
+
+            
+
         self.showAnim1.start()
         self.showAnim2.start()
 
@@ -300,23 +423,49 @@ class SettingsWindow(QWidget):
         self._closing = False
     
     def _finishClose(self):
+        self._menuActive = False
         QApplication.instance().removeEventFilter(self)
         self.close()
     
     def eventFilter(self, obj, event):
-        if event.type() == QEvent.Type.MouseButtonPress and not self._closing:
+        et = event.type()
+
+        if et == QEvent.Type.MouseButtonPress and not self._closing:
             try:
                 pos = event.globalPosition().toPoint()
             except AttributeError:
                 pos = event.globalPos()
 
             widget = QApplication.widgetAt(pos)
+
             if not widget or not self.isAncestorOf(widget):
                 self._closing = True
                 self.hideAnim1.start()
                 self.hideAnim2.start()
                 return True
+
+
+        if et == QEvent.Type.MouseMove:
+            for btn in self.findChildren(QPushButton):
+                cont = getattr(btn, "OptionsContainer", None)
+                if not cont:
+                    continue
+
+                try:
+                    cur = event.globalPosition().toPoint()
+                except AttributeError:
+                    cur = event.globalPos()
+
+                inside_btn = btn.geometry().contains(btn.mapFromGlobal(cur))
+                inside_cont = cont.geometry().contains(cont.mapFromGlobal(cur))
+
+                if not inside_btn and not inside_cont:
+                    anim = cont.Animations.get("hideAnim")
+                    if anim and not anim.state():
+                        anim.start()
+
         return super().eventFilter(obj, event)
+
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -357,10 +506,10 @@ class InteractableWindow(QMainWindow):
 
         self._data = kwargs or {}
         
-        self._data["titleKey"] = kwargs.get("titleKey", {"dataBase":"Dictionary", "key":"titles/widgetSelection"})
-        self._data["language"] = userSettings.get("language", "eng")
+        self._data["titleKey"] = kwargs.get("titleKey", "titles/widgetSelection")
+        self._data["language"] = UserSettings.get("language", "eng")
 
-        self._data["title"] = GetAdaptedText(Dictionary[self._data["language"]], "titles/widgetSelection")
+        self._data["title"] = GetAdaptedTextFromDictionary(self._data["titleKey"])
 
         self._data["_drag_pos"] = None
         self._data["exitConfirmationShowed"] = False
@@ -405,7 +554,7 @@ class InteractableWindow(QMainWindow):
         self.uis["holdAlt"] = QLabel(Dictionary[self._data["language"]]["labels"]["HoldAlt"], parent=self)
 
         CollectionService.addTag(self.uis["holdAlt"], "adaptableTextWidget")
-        self.uis["holdAlt"].setProperty("textPath", {"dataBase":"Dictionary", "key":"labels/HoldAlt"})
+        self.uis["holdAlt"].setProperty("textKey", "labels/HoldAlt")
 
         self.uis["holdAlt"].setProperty("class", "passive")
         addDynamicStyle(self.uis["holdAlt"], '''
@@ -432,17 +581,15 @@ class InteractableWindow(QMainWindow):
         self.menuBarLayout.addWidget(self.uis["holdAlt"], 0, Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignRight)
         
         self.buttons["settingsButton"] = QPushButton(Dictionary[self._data["language"]]["labels"]["Settings"])
-        
         CollectionService.addTag(self.buttons["settingsButton"], "adaptableTextWidget")
-        self.buttons["settingsButton"].setProperty("textPath", {"dataBase":"Dictionary", "key":"labels/Settings"})
-
+        self.buttons["settingsButton"].setProperty("textKey", "labels/Settings")
         self.buttons["settingsButton"].setProperty("class", "menubarButton")
         self.buttons["settingsButton"].setStyleSheet(menubarTextButtonStyle)
-        
+
         def Settings():
             button = self.buttons["settingsButton"]
 
-            settingsWindow = SettingsWindow(self, Size = [self.buttons["settingsButton"].width(), 100], Position = (button.mapToGlobal(button.rect().bottomLeft()) + QPoint(0, 2)) )
+            settingsWindow = SettingsWindow(self, Size = [self.buttons["settingsButton"].width(), len(SettingOptions) * 30], Position = (button.mapToGlobal(button.rect().bottomLeft()) + QPoint(0, 2)) )
             self.AddWindow(settingsWindow)
 
             settingsWindow.show()
@@ -465,7 +612,7 @@ class InteractableWindow(QMainWindow):
         self.uis["mainTitle"] = QLabel(self._data["title"])
         
         CollectionService.addTag(self.uis["mainTitle"], "adaptableTextWidget")
-        self.uis["mainTitle"].setProperty("textPath", {"dataBase":"Dictionary", "key":"titles/widgetSelection"})
+        self.uis["mainTitle"].setProperty("textKey", "titles/widgetSelection")
 
         self.uis["mainTitle"].setProperty("class", "mainTitle")
         self.uis["mainTitle"].setStyleSheet('''

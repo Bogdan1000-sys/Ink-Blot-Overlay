@@ -7,24 +7,27 @@ import sys, math, os, keyboard, json, time
 from Services import CollectionService
 
 # -- Functions --
-from Functions import GetAdaptedText
+from Functions import GetAdaptedTextFromDictionary, GetUserSettings, ChangeLanguage
 
 # -- Variables --
 
 # -- Constants --
-with open("Programm/Data/Constants.json", "r", encoding="utf-8") as cFile:
-    Constants = json.load(cFile)
+with open("Programm/Data/Pathes.json", "r", encoding="utf-8") as pFile:
+    Pathes = json.load(pFile)
 
 # -- Data --
-from Data import InitializeData
-Data = InitializeData()
-
-with open("Programm/Data/Dictionary.json", "r", encoding="utf-8") as dFile:
+with open(Pathes["Constants"], "r", encoding="utf-8") as cFile:
+    Constants = json.load(cFile)
+with open(Pathes["Data"], "r", encoding="utf-8") as dataFile:
+    Data = json.load(dataFile)
+with open(Pathes["Dictionary"], "r", encoding="utf-8") as dFile:
     Dictionary = json.load(dFile)
 
-userSettingsPath = "Programm/Data/userSettings.json"
-with open(userSettingsPath, "r", encoding="utf-8") as usFile:
-    UserSettings = json.load(usFile)
+UserSettings = GetUserSettings()
+
+def UpdateUserSettings():
+    global UserSettings
+    UserSettings = GetUserSettings()
 
 # -- Common Styles --
 mainContainerStyle = """
@@ -100,7 +103,7 @@ class WidgetSelectingWindow(InteractableWindow):
             title = QLabel(Dictionary[language]["labels"][langKey])
             
             CollectionService.addTag(title, "adaptableTextWidget")
-            title.setProperty("textPath", {"dataBase":"Dictionary", "key":"labels/" + langKey})
+            title.setProperty("textKey", "labels/" + langKey)
 
             title.setProperty("class", "containerTitle")
             title.setStyleSheet("""
@@ -234,20 +237,10 @@ class WidgetSelectingWindow(InteractableWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    settingWindow = WidgetSelectingWindow(titleKey={"dataBase":"Dictionary", "key":"titles/widgetSelection"})
+    settingWindow = WidgetSelectingWindow(titleKey="titles/widgetSelection")
     
-    def ChangeLanguage(newLanguage):
-        global Data, Dictionary
-
-        UserSettings["language"] = newLanguage
-
-        with open(userSettingsPath, "w", encoding="utf-8") as usFile:
-            json.dump(UserSettings, usFile, ensure_ascii=False, indent=4)
-
-        Data = InitializeData(newLanguage)
-
-        for i, widget in enumerate(CollectionService.getTagged("adaptableTextWidget")):
-            textPath = widget.property("textPath")
-            widget.setText( GetAdaptedText(database=(textPath["dataBase"] == "Data" and Data or Dictionary[newLanguage]), key=textPath["key"]) )
+    # QTimer.singleShot(2000,  lambda: ChangeLanguage("eng"))
+    # QTimer.singleShot(4000,  lambda: ChangeLanguage("kg"))
+    # QTimer.singleShot(6000,  lambda: ChangeLanguage("rus"))
     
     sys.exit(app.exec())
