@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame, QSlider
 from PyQt6.QtCore import Qt, QRectF, QPropertyAnimation, QPoint, QTimer, pyqtSignal, QEvent
 from PyQt6.QtGui import QPainter, QColor, QBrush, QPainterPath, QPixmap, QPen, QCursor
-import sys, keyboard, json, math
+import subprocess, keyboard, json, math
 
 # -- Services --
 from Services import CollectionService
@@ -281,6 +281,8 @@ class SettingsWindow(QWidget):
 
         self._starterSettings = UserSettings
         self._finalSettings = CloneObject(UserSettings)
+
+        self.setProperty("hidden", False)
 
         self._menuActive = True
         self._optionsContainer = None
@@ -568,6 +570,8 @@ class SettingsWindow(QWidget):
                 self._closing = True
                 self.hideAnim1.start()
                 self.hideAnim2.start()
+
+                self.setProperty("hidden", True)
                 self._menuActive = False
 
                 self.clearSettingsUI()
@@ -592,10 +596,108 @@ class SettingsWindow(QWidget):
         painter.setBrush(Qt.BrushStyle.NoBrush)
         painter.drawRoundedRect(rect.adjusted(1.5, 1.5, -1.5, -1.5), 10, 10)
 
+class UIApplication(QApplication):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.processes: dict[str, subprocess.Popen] = {}
+
+    def addProcess(self, key: str, process: subprocess.Popen):
+        """Добавляет процесс по ключу"""
+        self.processes[key] = process
+
+    def removeProcess(self, key: str):
+        """Завершает и удаляет процесс из словаря, если он существует"""
+        proc = self.processes.get(key)
+
+        if proc is not None:
+            try:
+                if proc.poll() is None:
+                    print(f"Terminating process '{key}'...")
+                    proc.terminate()
+            except Exception as e:
+                print(f"Error terminating process '{key}': {e}")
+
+            del self.processes[key]
+
+    def getProcess(self, key: str):
+        """Получить процесс по ключу"""
+        return self.processes.get(key, None)
+
+    def terminateProcesses(self):
+        """Завершает все процессы и очищает словарь"""
+        for key, p in list(self.processes.items()):
+            if p is not None:
+                try:
+                    print("Terminating:", key, p)
+                    p.terminate()
+                except Exception as e:
+                    print("Error terminating process:", e)
+
+        print("Subprocesses terminated!")
+        self.processes.clear()
+
+class MPushButton(QPushButton):
+    def __init__(self, text="", size=None, miniTitleKey=None, parent=None):
+        super().__init__(text, parent)
+
+        CollectionService.addTag(self, "commonOpacityWindow")
+
+        self.resize(size[0], size[1])
+
+        self.setProperty("class", "minimizeWindowButton")
+        self.setStyleSheet("""
+            QPushButton[class='minimizeWindowButton'] {
+                font-size: 14px;
+                font-family: 'Courier New', Courier, monospace;
+                padding: 4px 8px; 
+                color: rgba(255, 106, 0, 255);
+
+                background-color: qlineargradient(
+                    x1: 0, y1: 0,
+                    x2: 0, y2: 1,
+                    stop: 0 rgba(50, 25, 0, 255),
+                    stop: 1 rgba(30, 15, 0, 255)
+                );
+
+                border: 1px solid rgba(255, 106, 0, 255);
+                border-radius: 10px;
+            }
+            QPushButton[class='minimizeWindowButton']:hover {
+                background-color: qlineargradient(
+                    x1: 0, y1: 0,
+                    x2: 0, y2: 1,
+                    stop: 0 rgba(40, 15, 0, 255),
+                    stop: 1 rgba(20, 5, 0, 255)
+                );
+            }
+            QPushButton[class='minimizeWindowButton']:pressed {
+                background-color: qlineargradient(
+                    x1: 0, y1: 0,
+                    x2: 0, y2: 1,
+                    stop: 0 rgba(30, 5, 0, 255),
+                    stop: 1 rgba(10, 0, 0, 255)
+                );
+            }
+                           
+            QFrame[class='dragFrame'] {
+                background: black;
+            }
+        """)
+
+        self.setWindowFlags(
+            Qt.WindowType.FramelessWindowHint |
+            Qt.WindowType.Tool |
+            Qt.WindowType.WindowStaysOnTopHint
+        )
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+
+    
+
 class InteractableWindow(QMainWindow):
     valueChanged = pyqtSignal(str, object)    
     settingsWindow = None
-
+    
     def __init__(self, **kwargs):
         super().__init__()
         
@@ -608,6 +710,7 @@ class InteractableWindow(QMainWindow):
         self._data = kwargs or {}
         
         self._data["titleKey"] = kwargs.get("titleKey", "titles/widgetSelection")
+        self._data["miniTitleKey"] = kwargs.get("miniTitleKey", "miniTitles/widgetSelection")
         self._data["language"] = UserSettings.get("language", "eng")
 
         self._data["_drag_pos"] = None
@@ -701,11 +804,11 @@ class InteractableWindow(QMainWindow):
         self.buttons["settingsButton"].clicked.connect(lambda: Settings())
         self.menuBarLayout.addWidget(self.buttons["settingsButton"])
 
-        self.buttons["minimizeButton"] = QPushButton("_")
-        self.buttons["minimizeButton"].setProperty("class", "menubarButton")
-        self.buttons["minimizeButton"].setStyleSheet(menubarButtonStyle)
-        self.buttons["minimizeButton"].clicked.connect(lambda: self.showMinimized())
-        self.menuBarLayout.addWidget(self.buttons["minimizeButton"])
+        # self.buttons["minimizeButton"] = QPushButton("_")
+        # self.buttons["minimizeButton"].setProperty("class", "menubarButton")
+        # self.buttons["minimizeButton"].setStyleSheet(menubarButtonStyle)
+        # self.buttons["minimizeButton"].clicked.connect(lambda: self.showMinimized())
+        # self.menuBarLayout.addWidget(self.buttons["minimizeButton"])
 
         self.buttons["closeButton"] = QPushButton("X")
         self.buttons["closeButton"].setProperty("class", "menubarButton")
@@ -730,7 +833,15 @@ class InteractableWindow(QMainWindow):
         ''')
         self.iconsLayout.addWidget(self.uis["mainTitle"])
 
+        self.minimizeButton = MPushButton("<", parent=self, size=[25,Constants["Size"]["height"]//5], miniTitleKey=self._data["miniTitleKey"])
+        self.minimizeButton.move(self.width()+5, self.height()//2 - self.minimizeButton.height()//2)
+        self.minimizeButton.show()
+
         self.valueChanged.connect(self.OnChangedValue)
+
+        UIApplication.instance().installEventFilter(self)
+        self.updateMinimizeButtonPosition()
+
 
     def setValue(self, key, newValue):
         if self._data.get(key) != newValue:
@@ -768,6 +879,9 @@ class InteractableWindow(QMainWindow):
             if event.key() == Qt.Key.Key_Alt:
                 if self.uis["holdAlt"].property("class") != "passive":
                     applyStyleClass(self.uis["holdAlt"], "passive")
+
+        if obj == self and event.type() == QEvent.Type.Move:
+            self.updateMinimizeButtonPosition()
 
         return super().eventFilter(obj, event)
     
@@ -862,9 +976,27 @@ class InteractableWindow(QMainWindow):
             def exit_app():
                 self.exitCollection += 1
                 if self.exitCollection == 2:
-                    sys.exit(0)
+                    UIApplication.instance().terminateProcesses()
+                    UIApplication.instance().exit()
 
             destroy_dialog()
+            
+            hideAnims = []
+            for i, widget in enumerate(CollectionService.getTagged("commonOpacityWindow")):
+                if widget == self: continue
+                try: 
+                    widget.HideAnim = QPropertyAnimation(widget, b"windowOpacity")
+                    widget.HideAnim.setEndValue(0)
+                    widget.HideAnim.setDuration(GetQTime(0.2))
+
+                    currentPos = widget.pos()
+                    widget.HideAnimMove = QPropertyAnimation(widget, b"pos")
+                    widget.HideAnimMove.setStartValue(currentPos)
+                    widget.HideAnimMove.setEndValue(QPoint(currentPos.x(), currentPos.y() + 30))
+
+                    hideAnims.append(widget.HideAnim)
+                    hideAnims.append(widget.HideAnimMove)
+                except: pass
 
             self.HideAnim = QPropertyAnimation(self, b"windowOpacity")
             self.HideAnim.setEndValue(0)
@@ -885,6 +1017,9 @@ class InteractableWindow(QMainWindow):
             playSound(self.FadeSound)
             soundHandler()
 
+            for anim in hideAnims:
+                anim.start()
+
             self.HideAnimMove.start()
             self.HideAnim.start()
 
@@ -901,6 +1036,23 @@ class InteractableWindow(QMainWindow):
             self.setValue("exitState", None)
 
     def showMinimized(self):
+        hideAnims = []
+        for i, widget in enumerate(CollectionService.getTagged("commonOpacityWindow")):
+            if widget == self: continue
+            try: 
+                widget.HideAnim = QPropertyAnimation(widget, b"windowOpacity")
+                widget.HideAnim.setEndValue(0)
+                widget.HideAnim.setDuration(GetQTime(0.2))
+
+                currentPos = widget.pos()
+                widget.HideAnimMove = QPropertyAnimation(widget, b"pos")
+                widget.HideAnimMove.setStartValue(currentPos)
+                widget.HideAnimMove.setEndValue(QPoint(currentPos.x(), currentPos.y() + 30))
+
+                hideAnims.append(widget.HideAnim)
+                hideAnims.append(widget.HideAnimMove)
+            except: pass
+
         self.HideAnim = QPropertyAnimation(self, b"windowOpacity")
         self.HideAnim.setEndValue(0)
         self.HideAnim.setDuration(GetQTime(0.2))
@@ -914,10 +1066,32 @@ class InteractableWindow(QMainWindow):
 
         playSound(self.FadeSound)
 
+        for anim in hideAnims:
+            anim.start()
+
         self.HideAnimMove.start()
         self.HideAnim.start()
 
     def showEvent(self, a0):
+        showAnims = []
+        for i, widget in enumerate(CollectionService.getTagged("commonOpacityWindow")):
+            if widget == self: continue
+            if widget.property("hidden"): continue
+            try: 
+                widget.ShowAnim = QPropertyAnimation(widget, b"windowOpacity")
+                widget.ShowAnim.setStartValue(0)
+                widget.ShowAnim.setEndValue(UserSettings["opacity"])
+                widget.ShowAnim.setDuration(GetQTime(0.2))
+
+                currentPos = widget.pos()
+                widget.ShowAnimMove = QPropertyAnimation(widget, b"pos")
+                widget.ShowAnimMove.setStartValue(currentPos)
+                widget.ShowAnimMove.setEndValue(QPoint(currentPos.x(), currentPos.y() - 30))
+
+                showAnims.append(widget.ShowAnim)
+                showAnims.append(widget.ShowAnimMove)
+            except: pass
+
         self.ShowAnim = QPropertyAnimation(self, b"windowOpacity")
         self.ShowAnim.setStartValue(0)
         self.ShowAnim.setEndValue(UserSettings["opacity"])
@@ -930,7 +1104,31 @@ class InteractableWindow(QMainWindow):
         
         playSound(self.FadeSound)
 
+        for anim in showAnims:
+            anim.start()
+
         self.ShowAnimMove.start()
         self.ShowAnim.start()
 
         return super().showEvent(a0)
+    
+    def updateMinimizeButtonPosition(self):
+        screen = self.screen().availableGeometry()
+
+        x = self.x() + self.width() + 5
+        y = self.y() + self.height() // 2 - self.minimizeButton.height() // 2
+
+        btn_w = self.minimizeButton.width()
+        btn_h = self.minimizeButton.height()
+
+        if x + btn_w > screen.right():
+            x = screen.right() - btn_w - 5
+        if x < screen.left() + 5:
+            x = screen.left() + 5
+
+        if y + btn_h > screen.bottom():
+            y = screen.bottom() - btn_h - 5
+        if y < screen.top() + 5:
+            y = screen.top() + 5
+
+        self.minimizeButton.move(x, y)

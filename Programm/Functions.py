@@ -1,5 +1,5 @@
 import json
-from PyQt6.QtCore import QUrl
+from PyQt6.QtCore import QUrl, QPropertyAnimation, QPoint
 from PyQt6.QtMultimedia import QSoundEffect
 from copy import deepcopy
 
@@ -32,6 +32,25 @@ def applyStyleClass(obj, className):
 
 def SetClassVariable(classSelf, valueName:str, value):
     classSelf[valueName] = value
+
+# ---------- Animations ------------- #
+
+def HideCommonWindows(exceptedWindow=None):
+    for i, widget in enumerate(CollectionService.getTagged("commonOpacityWindow")):
+        if widget == exceptedWindow: continue
+        try: 
+            HideAnim = QPropertyAnimation(widget, b"windowOpacity")
+            HideAnim.setEndValue(0)
+            HideAnim.setDuration(GetQTime(0.2))
+
+            currentPos = widget.pos()
+            HideAnimMove = QPropertyAnimation(widget, b"pos")
+            HideAnimMove.setStartValue(currentPos)
+            HideAnimMove.setEndValue(QPoint(currentPos.x(), currentPos.y() + 30))
+
+            HideAnim.start()
+            HideAnimMove.start()
+        except: pass
 
 # ---------- User Settings ---------- #
 

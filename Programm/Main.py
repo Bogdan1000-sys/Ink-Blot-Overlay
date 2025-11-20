@@ -1,7 +1,7 @@
-from PyQt6.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QWidget, QScrollArea, QSizePolicy, QPushButton, QBoxLayout
-from PyQt6.QtCore import Qt, QPropertyAnimation, QPoint, QTimer
+from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QFrame, QWidget, QScrollArea, QSizePolicy, QPushButton, QBoxLayout
+from PyQt6.QtCore import Qt, QEvent
 from PyQt6.QtGui import QWheelEvent, QPixmap
-import sys, math, json, random
+import sys, math, json, random, subprocess, threading
 
 # -- Services --
 from Services import CollectionService
@@ -31,7 +31,14 @@ def UpdateUserSettings():
 UpdateUserSettings()
 
 # -- Scripts --
-from Classes import InteractableWindow, WidgetButton
+from Classes import InteractableWindow, WidgetButton, UIApplication
+
+if __name__ == "__main__":
+    uiApp = UIApplication(sys.argv)
+    uiApp.setStyleSheet("""
+        QPushButton:focus { outline: none; border: none; }
+    """)
+
 
 class WidgetSelectingWindow(InteractableWindow):
 
@@ -88,11 +95,36 @@ class WidgetSelectingWindow(InteractableWindow):
         )
         self.PreviewLabel.setPixmap(previewPixmap)
 
-        try: 
+        try:
             self.wcButtons["select"].clicked.disconnect()
             self.wcButtons["activate"].clicked.disconnect()
             self.wcButtons["activateSel"].clicked.disconnect()
         except: pass
+
+        def RunWProcess(path, key):
+            proc = subprocess.Popen(["py", path])
+            uiApp.addProcess(key, proc)
+
+            def watcher(k, p):
+                p.wait()
+                if uiApp.processes.get(k) == p:
+                    uiApp.removeProcess(k)
+
+            thread = threading.Thread(target=watcher, args=(key, proc), daemon=True)
+            thread.start()
+
+        def RunSelection():
+            for widget in selectedWidgets:
+                RunWProcess(f"Programm/Widgets/{widget}/main.py", widget)
+
+        def RunCurrent():
+            RunWProcess(f"Programm/Widgets/{self.selectedWidget}/main.py", self.selectedWidget)
+
+        def TerminateActive():
+            uiApp.terminateProcesses()
+
+        def TerimnateCurrent():
+            uiApp.removeProcess(self.selectedWidget)
 
         def OnClick(button: str):
             GetUserSettings()
@@ -103,15 +135,19 @@ class WidgetSelectingWindow(InteractableWindow):
                     selectedWidgets.append(self.selectedWidget)
             elif button == "activate":
                 if self.selectedWidget in activeWidgets:
+                    TerimnateCurrent()
                     activeWidgets.remove(self.selectedWidget)
                 else:
+                    RunCurrent()
                     activeWidgets.append(self.selectedWidget)
             elif button == "activateSel":
                 if self.selectedWidget not in activeWidgets:
+                    RunSelection()
                     for i in selectedWidgets:
                         activeWidgets.append(i)
                     selectedWidgets.clear()
                 else:
+                    TerminateActive()
                     activeWidgets.clear()
 
             AppendUserSettings({"selecteWidgets": selectedWidgets, "activeWidgets": activeWidgets})
@@ -403,60 +439,34 @@ class WidgetSelectingWindow(InteractableWindow):
         self.ButtonsContainer.setLayout(self.buttonsContainerLayout)
 
         self.wcButtons = {}
-        
-        self.wcButtons["select"] = QPushButton(parent=self.ButtonsContainer)
-        self.wcButtons["select"].label = QLabel("Select", parent=self.wcButtons["select"])
-        RegisterAdaptableText(self.wcButtons["select"].label, "buttons/select")
-        self.wcButtons["select"].label.setProperty("class", "wcButtonLabel")
-        self.wcButtons["select"].label.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
-        self.wcButtons["select"].label.setWordWrap(True)
-        self.wcButtons["select"].label.setMinimumWidth(1)
-        self.wcButtons["select"].label.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
-        self.wcButtons["select"].label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.wcButtons["select"].lay = QVBoxLayout(self.wcButtons["select"])
-        self.wcButtons["select"].lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.wcButtons["select"].lay.addWidget(self.wcButtons["select"].label)
-        self.wcButtons["select"].lay.setContentsMargins(0, 0, 0, 0)
-        self.wcButtons["select"].setProperty("class", "wcButton")
-        self.wcButtons["select"].setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        
-        self.wcButtons["activate"] = QPushButton(parent=self.ButtonsContainer)
-        self.wcButtons["activate"].label = QLabel("Active", parent=self.wcButtons["activate"])
-        RegisterAdaptableText(self.wcButtons["activate"].label, "buttons/activate")
-        self.wcButtons["activate"].label.setProperty("class", "wcButtonLabel")
-        self.wcButtons["activate"].label.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
-        self.wcButtons["activate"].label.setWordWrap(True)
-        self.wcButtons["activate"].label.setMinimumWidth(1)
-        self.wcButtons["activate"].label.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
-        self.wcButtons["activate"].label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.wcButtons["activate"].lay = QVBoxLayout(self.wcButtons["activate"])
-        self.wcButtons["activate"].lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.wcButtons["activate"].lay.addWidget(self.wcButtons["activate"].label)
-        self.wcButtons["activate"].lay.setContentsMargins(0, 0, 0, 0)
-        self.wcButtons["activate"].setProperty("class", "wcButton")
-        self.wcButtons["activate"].setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
-        self.wcButtons["activateSel"] = QPushButton(parent=self.ButtonsContainer)
-        self.wcButtons["activateSel"].label = QLabel("Activate Selected", parent=self.wcButtons["activateSel"])
-        RegisterAdaptableText(self.wcButtons["activateSel"].label, "buttons/activateSel")
-        self.wcButtons["activateSel"].label.setProperty("class", "wcButtonLabel")
-        self.wcButtons["activateSel"].label.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
-        self.wcButtons["activateSel"].label.setWordWrap(True)
-        self.wcButtons["activateSel"].label.setMinimumWidth(1)
-        self.wcButtons["activateSel"].label.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
-        self.wcButtons["activateSel"].label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.wcButtons["activateSel"].lay = QVBoxLayout(self.wcButtons["activateSel"])
-        self.wcButtons["activateSel"].lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.wcButtons["activateSel"].lay.addWidget(self.wcButtons["activateSel"].label)
-        self.wcButtons["activateSel"].lay.setContentsMargins(0, 0, 0, 0)
-        self.wcButtons["activateSel"].setProperty("class", "wcButton")
-        self.wcButtons["activateSel"].setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        def CreateInterButton(key: str):
+            button = QPushButton(parent=self.ButtonsContainer)
+            button.label = QLabel("[ Missing ]", parent=button)
+            RegisterAdaptableText(button.label, f"buttons/{key}")    
+            button.label.setProperty("class", "wcButtonLabel")
+            button.label.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
+            button.label.setWordWrap(True)
+            button.label.setMinimumWidth(1)
+            button.label.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
+            button.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            button.lay = QVBoxLayout(button)
+            button.lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            button.lay.addWidget(button.label)
+            button.lay.setContentsMargins(0, 0, 0, 0)
+            button.setProperty("class", "wcButton")
+            button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
+            return button
+
+        self.wcButtons["activate"] = CreateInterButton("activate")
         self.buttonsContainerLayout.addWidget(self.wcButtons["activate"])
+        
+        self.wcButtons["select"] = CreateInterButton("select")
         self.buttonsContainerLayout.addWidget(self.wcButtons["select"])
-        self.buttonsContainerLayout.addWidget(self.wcButtons["activateSel"])
 
-        #-----------------------------------------------------------------------------------------------------------------
+        self.wcButtons["activateSel"] = CreateInterButton("activateSel")
+        self.buttonsContainerLayout.addWidget(self.wcButtons["activateSel"])
 
         ContainerWidth = primaryContainerWidth - 10
         ContainerHeight = 150
@@ -596,12 +606,12 @@ class WidgetSelectingWindow(InteractableWindow):
             info["button"].clicked.connect( makeButtonClickHandler(name) )
 
         self.UpdatePreviewInfo(useSound=False)
+        
+        #UIApplication.instance().installEventFilter(self)
 
-        QApplication.instance().installEventFilter(self)
         self.show()
 
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
     settingWindow = WidgetSelectingWindow(titleKey="titles/widgetSelection")
     
-    sys.exit(app.exec())
+    sys.exit(uiApp.exec())

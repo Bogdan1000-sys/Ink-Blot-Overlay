@@ -35,6 +35,9 @@
 		"titles": {
 			"widgetSelection": "Ink Blot Overlay - Widget Selection"
 		},
+		"miniTitles": {
+			"widgetSelection": "WS"
+		},
 		"settings": {
 			"language": "Language",
 			"opacity": "Opacity",
@@ -85,6 +88,9 @@
 		"titles": {
 			"widgetSelection": "Ink Blot Overlay - Выбор Виджетов"
 		},
+		"miniTitles": {
+			"widgetSelection": "ВВ"
+		},
 		"settings": {
 			"language": "Язык",
 			"opacity": "Прозр.",
@@ -134,6 +140,9 @@
 		},
 		"titles": {
 			"widgetSelection": "Ink Blot Overlay - Виджеттерди тандоо"
+		},
+		"miniTitles": {
+			"widgetSelection": "ВТ"
 		},
 		"settings": {
 			"language": "Тил",
