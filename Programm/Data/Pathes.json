@@ -1,7 +1,0 @@
-{
-    "Constants": "Programm/Data/Constants.json",
-    "Data": "Programm/Data/Data.json",
-    "Dictionary": "Programm/Data/Dictionary.json",
-    "SettingOptions": "Programm/Data/SettingOptions.json",
-    "userSettings": "Programm/Data/userSettings.json"
-}
