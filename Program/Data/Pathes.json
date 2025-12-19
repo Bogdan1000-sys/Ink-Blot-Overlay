@@ -1,0 +1,7 @@
+{
+    "Constants": "Data/Constants.json",
+    "Data": "Data/Data.json",
+    "Dictionary": "Data/Dictionary.json",
+    "SettingOptions": "Data/SettingOptions.json",
+    "userSettings": "Data/userSettings.json"
+}
