@@ -1,0 +1,292 @@
+import json
+from PyQt6.QtCore import QUrl, QPropertyAnimation, QPoint, QTimer
+from PyQt6.QtMultimedia import QSoundEffect
+from copy import deepcopy
+import subprocess, threading, argparse
+
+# -- Services --
+from Services import CollectionService
+
+# -- Data --
+with open("Data/Dictionary.json", "r", encoding="utf-8") as dFile:
+    Dictionary = json.load(dFile)
+
+# -- Functions --
+def GetQTime(n:float):
+    return int(n*1000)
+
+def getHex(rgb):
+    if isinstance(rgb, (list, tuple)) and len(rgb) >= 3:
+        r, g, b = rgb[:3]
+        return f"#{r:02X}{g:02X}{b:02X}"
+    elif isinstance(rgb, str):
+        parts = [int(x) for x in rgb.replace(' ', '').split(',')]
+        return f"#{parts[0]:02X}{parts[1]:02X}{parts[2]:02X}"
+    else:
+        raise ValueError("Error: Unknonw format RGB")
+
+def applyStyleClass(obj, className):
+    obj.setProperty("class", className)
+    obj.style().unpolish(obj)
+    obj.style().polish(obj)
+    obj.update()
+
+def SetClassVariable(classSelf, valueName:str, value):
+    classSelf[valueName] = value
+
+# ---------- Animations ------------- #
+
+def HideCommonWindows(exceptedWindow=None):
+    for i, widget in enumerate(CollectionService.getTagged("commonOpacityWindow")):
+        if widget == exceptedWindow: continue
+        try: 
+            HideAnim = QPropertyAnimation(widget, b"windowOpacity")
+            HideAnim.setEndValue(0)
+            HideAnim.setDuration(GetQTime(0.2))
+
+            currentPos = widget.pos()
+            HideAnimMove = QPropertyAnimation(widget, b"pos")
+            HideAnimMove.setStartValue(currentPos)
+            HideAnimMove.setEndValue(QPoint(currentPos.x(), currentPos.y() + 30))
+
+            HideAnim.start()
+            HideAnimMove.start()
+        except: pass
+
+def CloneAnimation(animation: QPropertyAnimation, parent=None):
+    newAnimation = QPropertyAnimation(parent or animation.parent(), animation.propertyName())
+
+    newAnimation.setStartValue(animation.startValue())
+    newAnimation.setEndValue(animation.endValue())
+    newAnimation.setDuration(animation.duration())
+    newAnimation.setEasingCurve(animation.easingCurve())
+    newAnimation.setDirection(animation.direction())
+    newAnimation.setLoopCount(animation.loopCount())
+
+    return newAnimation
+
+# ---------- User Settings ---------- #
+
+def GetUserSettings():
+    with open("Data/userSettings.json", "r", encoding="utf-8") as usFile:
+        return json.load(usFile)
+    
+def DeepUpdate(old: dict, new: dict) -> bool:
+    """
+    Обновляет old на основе new.
+    Возвращает True, если были изменения.
+    """
+    changed = False
+
+    for key, value in new.items():
+        if isinstance(value, dict) and isinstance(old.get(key), dict):
+            if DeepUpdate(old[key], value):
+                changed = True
+        else:
+            if key not in old or old[key] != value:
+                old[key] = value
+                changed = True
+
+    return changed
+
+def SetUserSettings(chapter: str, obj: dict):
+    OldSettings = GetUserSettings()
+    NewSettings = CloneObject(OldSettings)
+
+    if chapter not in NewSettings or not isinstance(NewSettings[chapter], dict):
+        NewSettings[chapter] = {}
+
+    changed = DeepUpdate(NewSettings[chapter], obj)
+
+    if not changed:
+        return
+
+    with open("Data/userSettings.json", "w", encoding="utf-8") as usFile:
+        json.dump(NewSettings, usFile, ensure_ascii=False, indent=4)
+
+    if chapter == "General" and "language" in obj:
+        oldLang = OldSettings.get("General", {}).get("language")
+        if obj["language"] != oldLang:
+            ChangeLanguage(obj["language"], updateSettings=False)
+
+
+def AppendUserSettings(chapter: str, obj: dict):
+    userSettings = GetUserSettings()
+
+    if chapter not in userSettings or not isinstance(userSettings[chapter], dict):
+        userSettings[chapter] = {}
+
+    for key, value in obj.items():
+        userSettings[chapter][key] = value
+
+    with open("Data/userSettings.json", "w", encoding="utf-8") as usFile:
+        json.dump(userSettings, usFile, ensure_ascii=False, indent=4)
+
+# ------------------------------------- #
+
+def GetAdaptedTextFromDictionary(key: str):
+    keyParts = key.split("/")
+    
+    userSettings = GetUserSettings()
+    language = userSettings.get("General", {}).get("language", "eng")
+
+    path = Dictionary[language]
+    
+    for key in keyParts:
+        if key in path:
+            path = path[key]
+        else:
+            print(f"[Warn] Key '{key}' not found in path '{'/'.join(keyParts)}'")
+            path = None
+            break
+
+    if path is not None:
+        return str(path)
+    else:
+        return "[Missing]"
+    
+def RegisterAdaptableText(obj, key):
+    CollectionService.addTag(obj, "adaptableTextWidget")
+    obj.setProperty("textKey", key)
+    obj.setText(GetAdaptedTextFromDictionary(key))
+    
+def CloneObject(obj):
+    if obj is None:
+        return None
+    try:
+        return deepcopy(obj)
+    except Exception:
+        print("[WARNING!] The object is uncopyable!")
+        return obj
+    
+def CompareObjects(objA, objB):
+    if objA is objB:
+        return True
+
+    if type(objA) != type(objB):
+        return False
+
+    if isinstance(objA, (int, float, str, bool, type(None))):
+        return objA == objB
+
+    if isinstance(objA, (list, tuple, set)):
+        return len(objA) == len(objB) and all(CompareObjects(a, b) for a, b in zip(objA, objB))
+
+    if isinstance(objA, dict):
+        if objA.keys() != objB.keys():
+            return False
+        return all(CompareObjects(objA[k], objB[k]) for k in objA)
+
+    try:
+        return objA == objB
+    except Exception:
+        pass
+
+    if hasattr(objA, "__dict__") and hasattr(objB, "__dict__"):
+        return CompareObjects(objA.__dict__, objB.__dict__)
+
+    return False
+    
+def ChangeLanguage(newLanguage, updateSettings=True):
+    if updateSettings:
+        UserSettings = GetUserSettings()
+        UserSettings["General"]["language"] = newLanguage
+
+        with open("Data/userSettings.json", "w", encoding="utf-8") as usFile:
+            json.dump(UserSettings, usFile, ensure_ascii=False, indent=4)
+
+    for i, widget in enumerate(CollectionService.getTagged("adaptableTextWidget")):
+        try:
+            textKey = widget.property("textKey")
+            widget.setText(GetAdaptedTextFromDictionary(textKey))
+        except: pass
+
+
+def PrintText(container=None, text=None, type="origin", interval=30):
+    if container == None or text == None: return
+    if type == "dict":
+        text = GetAdaptedTextFromDictionary(text)
+
+    pauseSymbols = {
+        ",": 500,
+        ";": 500,
+        ":": 500,
+        "-": 500,
+        ".": 1000,
+        "!": 1000,
+        "?": 1000
+    }
+
+    if hasattr(container, "_printTimer"):
+        container._printTimer.stop()
+
+    container.setText("")
+    container._printIndex = 0
+    container._fullText = text
+
+    timer = QTimer(container)
+    container._printTimer = timer
+
+    def step():
+        if container._printIndex >= len(container._fullText):
+            try: container.setProperty("Printed", True)
+            except: return
+
+            timer.stop()
+            return
+
+        char = container._fullText[container._printIndex]
+        container.setText(container.text() + char)
+        container._printIndex += 1
+
+        extraDelay = pauseSymbols.get(char, 0)
+        timer.setInterval(interval + extraDelay)
+
+    timer.timeout.connect(step)
+    timer.start(interval)
+
+    try: container.setProperty("Printed", False)
+    except: return
+
+
+def initSound(url, parent):
+    effect = QSoundEffect(parent)
+    effect.setSource(QUrl.fromLocalFile(url))
+    effect.setLoopCount(1)
+
+    return effect
+
+def playSound(windows=None, sound=None, volume=None):
+    if windows == None or sound == None: return
+    userSettings = GetUserSettings()
+    
+    multiplier = userSettings.get("General", {}).get("volume", 1.0)
+    if volume == None:
+        volume = userSettings.get("Windows", {}).get(windows, {}).get("volume", 1.0)
+
+    try:
+        sound.setVolume(volume*multiplier)
+    except: pass
+
+    sound.play()
+
+# ARGS PARSING ---------------------------------------------------------------------------
+
+def ParseArguments(schema: dict):
+    """
+    schema = {
+        "text": str,
+        "number": int,
+        "fraction": float,        
+        "logic": bool
+    }
+    """
+    parser = argparse.ArgumentParser()
+
+    for name, arg_type in schema.items():
+        if arg_type is bool:
+            parser.add_argument(f"--{name}", action="store_true")
+        else:
+            parser.add_argument(f"--{name}", type=arg_type)
+
+    return parser.parse_args()
