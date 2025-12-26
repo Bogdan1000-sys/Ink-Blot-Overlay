@@ -1,5 +1,0 @@
-{
-    "language": {"Type": "Options", "Options": ["eng", "rus", "kg"]},
-    "opacity": {"Type": "Slider", "Options": {"min": 0.25, "max": 1}},
-    "volume": {"Type": "Slider", "Options": {"min": 0, "max": 1}}
-}
