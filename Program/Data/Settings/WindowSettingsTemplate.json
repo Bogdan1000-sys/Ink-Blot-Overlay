@@ -1,0 +1,52 @@
+{
+	"Default": {
+		"opacity": 1.0,
+		"volume": 1.0,
+		"position": false
+	},
+	"Selection": {
+		"opacity": 1.0,
+		"volume": 1.0,
+		"position": false
+	},
+	"Homepage": {
+		"opacity": 1.0,
+		"volume": 1.0,
+		"position": false
+	},
+	"Blots": {
+		"opacity": 1.0,
+		"volume": 1.0,
+		"position": false
+	},
+	"ClipboardHistory": {
+		"opacity": 1.0,
+		"volume": 1.0,
+		"position": false
+	},
+	"Clock": {
+		"opacity": 1.0,
+		"volume": 1.0,
+		"position": false
+	},
+	"ConcentrationMode": {
+		"opacity": 1.0,
+		"volume": 1.0,
+		"position": false
+	},
+	"Notepad": {
+		"opacity": 1.0,
+		"volume": 1.0,
+		"position": false
+	},
+	"ScreenFire": {
+		"opacity": 1.0,
+		"volume": 1.0,
+		"position": false
+	},
+	"SoundManager": {
+		"opacity": 1.0,
+		"volume": 1.0,
+		"position": false
+	}
+}
