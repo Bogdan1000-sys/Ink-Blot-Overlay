@@ -1,0 +1,60 @@
+{
+    "WidgetsData": {
+        "Blots": {
+            "Key": "Blots",
+            "Name": "widgetNames/Blots",
+            "Type": "Visual",
+            "Icon": "Resources/Images/Icons/InkBlots.png",
+            "Description": "widgetDescriptions/Blots",
+            "ScriptPath": "Widgets/Blots.py"
+        },
+        "ClipboardHistory": {
+            "Key": "ClipboardHistory",
+            "Name": "widgetNames/ClipboardHistory",
+            "Type": "Util",
+            "Icon": "Resources/Images/Icons/ClipboardHistory.png",
+            "Description": "widgetDescriptions/ClipboardHistory",
+            "ScriptPath": "Widgets/ClipboardHistory.py"
+        },
+        "Clock": {
+            "Key": "Clock",
+            "Name": "widgetNames/Clock",
+            "Type": "Visual",
+            "Icon": "Resources/Images/Icons/Clock.png",
+            "Description": "widgetDescriptions/Clock",
+            "ScriptPath": "Widgets/Clock.py"
+        },
+        "ConcentrationMode": {
+            "Key": "ConcentrationMode",
+            "Name": "widgetNames/ConcentrationMode",
+            "Type": "Interactable",
+            "Icon": "Resources/Images/Icons/ConcentrationMode.png",
+            "Description": "widgetDescriptions/ConcentrationMode",
+            "ScriptPath": "Widgets/ConcentrationMode.py"
+        },
+        "Notepad": {
+            "Key": "Notepad",
+            "Name": "widgetNames/Notepad",
+            "Type": "Util",
+            "Icon": "Resources/Images/Icons/Notepad.png",
+            "Description": "widgetDescriptions/Notepad",
+            "ScriptPath": "Widgets/Notepad.py"
+        },
+        "ScreenFire": {
+            "Key": "ScreenFire",
+            "Name": "widgetNames/ScreenFire",
+            "Type": "Visual",
+            "Icon": "Resources/Images/Icons/ScreenFire.png",
+            "Description": "widgetDescriptions/ScreenFire",
+            "ScriptPath": "Widgets/ScreenFire.py"
+        },
+        "SoundManager": {
+            "Key": "SoundManager",
+            "Name": "widgetNames/SoundManager",
+            "Type": "Util",
+            "Icon": "Resources/Images/Icons/SoundManager.png",
+            "Description": "widgetDescriptions/SoundManager",
+            "ScriptPath": "Widgets/SoundManager.py"
+        }
+    }
+}
