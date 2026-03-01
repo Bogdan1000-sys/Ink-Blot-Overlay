@@ -70,62 +70,102 @@ class ConnectionListener(QObject):
         self._running = False
 
 class SoundService:
-    _instance = None
+
+    _initialized = False
     _supported = (".wav", ".mp3")
 
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super(SoundService, cls).__new__(cls)
-        return cls._instance
+    sounds = {}
 
-    def __init__(self):
-        if hasattr(self, "_initialized"):
+    music_volume = 1.0
+    sfx_volume = 1.0
+
+    # -------------------
+    # Init
+    # -------------------
+    @classmethod
+    def init(cls):
+        if cls._initialized:
             return
 
         pygame.mixer.init()
+        cls._initialized = True
 
-        self.sounds = {}
-        self.music_volume = 1.0
-        self.sfx_volume = 1.0
+    # -------------------
+    # Load
+    # -------------------
+    @classmethod
+    def loadSound(cls, name: str, path: str):
+        cls.init()
 
-        self._initialized = True
-
-    def loadSound(self, name: str, path: str):
         sound = pygame.mixer.Sound(path)
-        sound.set_volume(self.sfx_volume)
-        self.sounds[name] = sound
+        sound.set_volume(cls.sfx_volume)
+        cls.sounds[name] = sound
 
-    def loadFolder(self, path: str):
+    @classmethod
+    def loadFolder(cls, path: str):
+        cls.init()
+
         for root, _, files in os.walk(path):
             for file in files:
-                if file.lower().endswith(self._supported):
+                if file.lower().endswith(cls._supported):
+
                     full_path = os.path.join(root, file)
-                    name = os.path.splitext(file)[0]
                     relative = os.path.relpath(full_path, path)
+
                     name = os.path.splitext(relative)[0].replace("\\", "/")
-                    self.loadSound(name, full_path)
 
-    def playSound(self, name: str):
-        if name in self.sounds:
-            self.sounds[name].play()
+                    cls.loadSound(name, full_path)
 
-    def stopSound(self, name: str):
-        if name in self.sounds:
-            self.sounds[name].stop()
+    # -------------------
+    # Sound
+    # -------------------
+    @classmethod
+    def playSound(cls, name: str):
+        if name in cls.sounds:
+            cls.sounds[name].play()
 
-    def playMusic(self, path: str, loop=True):
+    @classmethod
+    def stopSound(cls, name: str):
+        if name in cls.sounds:
+            cls.sounds[name].stop()
+
+    @classmethod
+    def isPlaying(cls, name: str) -> bool:
+        if name not in cls.sounds:
+            return False
+
+        return cls.sounds[name].get_num_channels() > 0
+
+    # -------------------
+    # Music
+    # -------------------
+    @classmethod
+    def playMusic(cls, path: str, loop=True):
+        cls.init()
+
         pygame.mixer.music.load(path)
-        pygame.mixer.music.set_volume(self.music_volume)
+        pygame.mixer.music.set_volume(cls.music_volume)
         pygame.mixer.music.play(-1 if loop else 0)
 
-    def stopMusic(self):
+    @classmethod
+    def stopMusic(cls):
         pygame.mixer.music.stop()
 
-    def setMusicVolume(self, volume: float):
-        self.music_volume = volume
+    @classmethod
+    def isMusicPlaying(cls) -> bool:
+        return pygame.mixer.music.get_busy()
+
+    # -------------------
+    # Volume
+    # -------------------
+    @classmethod
+    def setMusicVolume(cls, volume: float):
+        cls.music_volume = volume
         pygame.mixer.music.set_volume(volume)
 
-    def setSoundsVolume(self, volume: float):
-        self.sfx_volume = volume
-        for sound in self.sounds.values():
+    @classmethod
+    def setSoundsVolume(cls, volume: float):
+        cls.sfx_volume = volume
+
+        for sound in cls.sounds.values():
             sound.set_volume(volume)
