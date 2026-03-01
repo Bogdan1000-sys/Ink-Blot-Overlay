@@ -1,5 +1,5 @@
 from PyQt6.QtCore import QObject, pyqtSignal
-import threading
+import threading, pygame, os
 
 class CollectionService:
     _registry = {}
@@ -68,3 +68,64 @@ class ConnectionListener(QObject):
 
     def stop(self):
         self._running = False
+
+class SoundService:
+    _instance = None
+    _supported = (".wav", ".mp3")
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(SoundService, cls).__new__(cls)
+        return cls._instance
+
+    def __init__(self):
+        if hasattr(self, "_initialized"):
+            return
+
+        pygame.mixer.init()
+
+        self.sounds = {}
+        self.music_volume = 1.0
+        self.sfx_volume = 1.0
+
+        self._initialized = True
+
+    def loadSound(self, name: str, path: str):
+        sound = pygame.mixer.Sound(path)
+        sound.set_volume(self.sfx_volume)
+        self.sounds[name] = sound
+
+    def loadFolder(self, path: str):
+        for root, _, files in os.walk(path):
+            for file in files:
+                if file.lower().endswith(self._supported):
+                    full_path = os.path.join(root, file)
+                    name = os.path.splitext(file)[0]
+                    relative = os.path.relpath(full_path, path)
+                    name = os.path.splitext(relative)[0].replace("\\", "/")
+                    self.loadSound(name, full_path)
+
+    def playSound(self, name: str):
+        if name in self.sounds:
+            self.sounds[name].play()
+
+    def stopSound(self, name: str):
+        if name in self.sounds:
+            self.sounds[name].stop()
+
+    def playMusic(self, path: str, loop=True):
+        pygame.mixer.music.load(path)
+        pygame.mixer.music.set_volume(self.music_volume)
+        pygame.mixer.music.play(-1 if loop else 0)
+
+    def stopMusic(self):
+        pygame.mixer.music.stop()
+
+    def setMusicVolume(self, volume: float):
+        self.music_volume = volume
+        pygame.mixer.music.set_volume(volume)
+
+    def setSoundsVolume(self, volume: float):
+        self.sfx_volume = volume
+        for sound in self.sounds.values():
+            sound.set_volume(volume)

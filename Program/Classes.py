@@ -1621,34 +1621,38 @@ class ModifiedWindow(InteractableWindow):
 
         self._data["Size"] = kwargs.get("Size", {"width": 500, "height": 500})
         self._data["Modifiers"] = kwargs.get("Modifiers", ["icon", "title", "gsettings", "settings", "close", "minimize", "alt"])
+        self._data["Mode"] = kwargs.get("Mode", "whiteList")
 
         self.resize(self._data["Size"]["width"], self._data["Size"]["height"])
 
-        if not "icon" in self._data["Modifiers"]:
+        mode = self._data["Mode"]
+        modifiers = self._data["Modifiers"]
+
+        if (mode == "whiteList" and not "icon" in modifiers) or (mode == "blackList" and "icon" in modifiers):
             self.icons["mainIcon"].hide()
             self.icons["mainIcon"].destroy()
 
-        if not "title" in self._data["Modifiers"]:
+        if (mode == "whiteList" and not "title" in modifiers) or (mode == "blackList" and "title" in modifiers):
             self.uis["mainTitle"].hide()
             self.uis["mainTitle"].destroy()
 
-        if not "settings" in self._data["Modifiers"]:
+        if (mode == "whiteList" and not "settings" in modifiers) or (mode == "blackList" and "settings" in modifiers):
             self.buttons["settingsButton"].hide()
             self.buttons["settingsButton"].destroy()
 
-        if not "gsettings" in self._data["Modifiers"]:
+        if (mode == "whiteList" and not "gsettings" in modifiers) or (mode == "blackList" and "gsettings" in modifiers):
             self.buttons["generalSettingsButton"].hide()
             self.buttons["generalSettingsButton"].destroy()
         
-        if not "close" in self._data["Modifiers"]:
+        if (mode == "whiteList" and not "close" in modifiers) or (mode == "blackList" and "close" in modifiers):
             self.buttons["closeButton"].hide()
             self.buttons["closeButton"].destroy()
 
-        if not "minimize" in self._data["Modifiers"]:
+        if (mode == "whiteList" and not "minimize" in modifiers) or (mode == "blackList" and "minimize" in modifiers):
             self.minimizeButton.hide()
             self.minimizeButton.destroy()
         
-        if not "alt" in self._data["Modifiers"]:
+        if (mode == "whiteList" and not "alt" in modifiers) or (mode == "blackList" and "alt" in modifiers):
             self.uis["holdAlt"].hide()
             self.uis["holdAlt"].destroy()
 

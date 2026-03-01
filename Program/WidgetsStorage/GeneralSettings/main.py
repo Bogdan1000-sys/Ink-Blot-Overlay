@@ -8,7 +8,7 @@ sys.path.insert(0, ROOT)
 from Services import ConnectionListener
 
 # -- Functions --
-from Functions import GetUserSettings, AppendUserSettings
+from Functions import GetUserSettings, AppendUserSettings, RegisterAdaptableText
 
 # -- Objects --
 generalSettingsWindow = None
@@ -54,6 +54,8 @@ def main(connection):
                     screen.left() + random.randint(0, screen.width() - self.width()),
                     screen.top() + (screen.height() - self.height()) // 2
                 )
+
+            RegisterAdaptableText(self.uis["holdAlt"], "labels/ALT")
                 
             self.show()
 
@@ -62,7 +64,7 @@ def main(connection):
             self.Hide(onFinished=uiApp.exit, Hard=True)
             return
 
-    generalSettingsWindow = GeneralSettingsWindow(titleKey="titles/generalSettings", name="GeneralSettings", Modifiers=["minimize", "close"])
+    generalSettingsWindow = GeneralSettingsWindow(titleKey="titles/generalSettings", name="GeneralSettings", Mode="blackList", Modifiers=["settings", "gsettings"])
 
     # CODE -----------------------------------------------------------------------------------------------
 

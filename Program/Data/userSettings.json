@@ -15,16 +15,16 @@
             "opacity": 1.0,
             "volume": 1.0,
             "position": [
-                605,
-                223
+                2115,
+                278
             ]
         },
         "GeneralSettings": {
             "opacity": 1.0,
             "volume": 1.0,
             "position": [
-                94,
-                226
+                156,
+                307
             ]
         },
         "Homepage": {
@@ -45,10 +45,7 @@
         "Clock": {
             "opacity": 1.0,
             "volume": 1.0,
-            "position": [
-                34,
-                230
-            ]
+            "position": false
         },
         "ConcentrationMode": {
             "opacity": 1.0,
