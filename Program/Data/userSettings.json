@@ -14,17 +14,14 @@
         "WidgetsMenu": {
             "opacity": 1.0,
             "volume": 1.0,
-            "position": [
-                2115,
-                278
-            ]
+            "position": false
         },
         "GeneralSettings": {
             "opacity": 1.0,
             "volume": 1.0,
             "position": [
-                156,
-                307
+                61,
+                336
             ]
         },
         "Homepage": {

@@ -4,7 +4,9 @@ from PyQt6.QtGui import QWheelEvent, QPixmap
 import sys, math, json, random
 
 # -- Services --
-from Services import CollectionService, ConnectionListener
+from Services import CollectionService, ConnectionListener, SoundService
+
+SoundService.loadFolder("Resources/SFX")
 
 # -- Widgets --
 from Widgets import Widgets
@@ -18,13 +20,11 @@ uiApp = None
 widgetsMenuWindow = None
 
 # -- Resources --
-SelectWidgetSound = "Resources/SFX/WidgetSelect.wav"
-
 with open("Data/Pathes.json", "r", encoding="utf-8") as pFile:
     Pathes = json.load(pFile)
 
 # -- Functions --
-from Functions import GetUserSettings, applyStyleClass, initSound, playSound, RegisterAdaptableText, AppendUserSettings, GetQTime, CloneAnimation, PrintText, CompareObjects
+from Functions import GetUserSettings, applyStyleClass, RegisterAdaptableText, AppendUserSettings, GetQTime, CloneAnimation, PrintText, CompareObjects
 
 def RunWMultiprocess(key, args=(), joinProcess=False):
     if key == None: return
@@ -76,7 +76,7 @@ def UpdateUserSettings():
 UpdateUserSettings()
 
 # -- Script --
-from Classes import InteractableWindow, ModifiedWindow, WidgetButton, UIApplication, EmptyWindow
+from Classes import InteractableWindow, WidgetButton, UIApplication, EmptyWindow
 
 if __name__ == "__main__":
     uiApp = UIApplication(sys.argv, appName="MainApplication")
@@ -306,7 +306,7 @@ class WidgetsMenuWindow(InteractableWindow):
         '''
 
         if useSound:
-            playSound(self.objectName(), self.SelectWidgetSound)
+            SoundService.playSound("ClickSound")
 
         for button in widgetButtons:
             button.setStyleSheet(WidgetButtonStyle)
@@ -331,8 +331,6 @@ class WidgetsMenuWindow(InteractableWindow):
         super().__init__(**kwargs) 
 
         UpdateUserSettings()
-
-        self.SelectWidgetSound = initSound(SelectWidgetSound, self)
 
         self.setWindowTitle(Constants["Title"])
         self.resize(Constants["Size"]["width"], Constants["Size"]["height"])
@@ -748,8 +746,6 @@ class WelcomeWindow(EmptyWindow):
 
         self.Animations = {}
         self.SFX = {}
-
-        self.SFX["optionsClickSound"] = initSound("Resources/SFX/PrintClick.wav", self)
 
         self.setWindowTitle('Welcome')
         screen = uiApp.primaryScreen().availableGeometry()
@@ -1199,7 +1195,7 @@ class WelcomeWindow(EmptyWindow):
                     widgetsMenuWindow = WidgetsMenuWindow(titleKey="titles/widgetsMenu", name="WidgetsMenu")
 
                 def optionBasic():
-                    playSound(self.objectName(), self.SFX["optionsClickSound"])
+                    SoundService.playSound("ClickSound")
 
                 self.debounses["createNewOptionsDebounse"] = False
                 def createNewLayerOptions(

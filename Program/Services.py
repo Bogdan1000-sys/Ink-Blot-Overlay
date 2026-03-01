@@ -1,5 +1,7 @@
 from PyQt6.QtCore import QObject, pyqtSignal
-import threading, pygame, os
+import os
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
+import threading, pygame
 
 class CollectionService:
     _registry = {}
