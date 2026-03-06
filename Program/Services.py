@@ -1,7 +1,9 @@
 from PyQt6.QtCore import QObject, pyqtSignal
+from PyQt6.QtWidgets import QLabel
 import os
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
-import threading, pygame
+import threading, pygame, json
+from copy import deepcopy
 
 class CollectionService:
     _registry = {}
@@ -71,8 +73,162 @@ class ConnectionListener(QObject):
     def stop(self):
         self._running = False
 
-class SoundService:
+class LocalizationService:
+    __dictPath = "Data/Dictionary.json"
+    __dictionary = None
 
+    @classmethod
+    def __init__(cls):
+        with open(cls.__dictPath, "r", encoding="utf-8") as dFile: cls.__dictionary = json.load(dFile)
+    
+    @classmethod
+    def registerAdaptableText(cls, obj: QLabel, key: str):
+        CollectionService.addTag(obj, "adaptableTextWidget")
+        obj.setProperty("textKey", key)
+        obj.setText(cls.getAdaptedTextFromDictionary(key))
+
+    @classmethod
+    def getAdaptedTextFromDictionary(cls, key: str):
+        keyParts = key.split("/")
+
+        language = SettingsService.getUserSettings().get("General", {}).get("language", "eng")
+
+        path = cls.__dictionary[language]
+        
+        for key in keyParts:
+            if key in path:
+                path = path[key]
+            else:
+                print(f"[Warn] Key '{key}' not found in path '{'/'.join(keyParts)}'")
+                path = None
+                break
+
+        if path is not None:
+            return str(path)
+        else:
+            return "[Missing]"
+        
+    @classmethod
+    def changeLanguage(cls, newLanguage: str, updateSettings=True):
+        if updateSettings:
+            generalChapter = SettingsService.getUserSettings().get("General", {})
+            generalChapter["language"] = newLanguage
+            SettingsService.setUserSettings("General", generalChapter)
+
+        for widget in CollectionService.getTagged("adaptableTextWidget"):
+            try: widget.setText(cls.getAdaptedTextFromDictionary(widget.property("textKey")))
+            except: pass
+
+class SettingsService:
+    settings = None
+    __path = "Data/userSettings.json"
+    
+    @classmethod
+    def __init__(cls):
+        pass
+
+    @classmethod
+    def updateUserSettings(cls):
+        cls.settings = cls.getUserSettings()
+
+    @classmethod
+    def getUserSettings(cls) -> dict:
+        with open(cls.__path, "r", encoding="utf-8") as usFile:
+            return json.load(usFile)
+        
+    @classmethod
+    def __setJSON(cls, settings: dict):
+        with open(cls.__path, "w", encoding="utf-8") as usFile:
+            json.dump(settings, usFile, ensure_ascii=False, indent=4)
+
+    @classmethod
+    def setUserSettings(cls, chapter: str, settings: dict):
+        _oldSettings = cls.getUserSettings()
+        _newSettings = ObjectService.deepClone(_oldSettings)
+
+        if chapter not in _newSettings or not isinstance(_newSettings[chapter], dict):
+            _newSettings[chapter] = {}
+
+        changed = ObjectService.deepUpdate(_newSettings[chapter], settings)
+        if not changed:
+            return
+
+        cls.__setJSON(cls.settings)
+
+        if chapter == "General" and "language" in settings:
+            oldLang = _oldSettings.get("General", {}).get("language")
+            if settings["language"] != oldLang:
+                LocalizationService.changeLanguage(settings["language"], False)
+
+    @classmethod
+    def appendUserSettings(cls, chapter: str, obj: dict):
+        cls.updateUserSettings()
+
+        if chapter not in cls.settings or not isinstance(cls.settings[chapter], dict):
+            cls.settings[chapter] = {}
+
+        for key, value in obj.items():
+            cls.settings[chapter][key] = value
+
+        cls.__setJSON(cls.settings)
+    
+class ObjectService:
+    @classmethod
+    def deepUpdate(cls, old: dict, new: dict) -> bool:
+        changed = False
+
+        for key, value in new.items():
+            if isinstance(value, dict) and isinstance(old.get(key), dict):
+                if cls.deepUpdate(old[key], value):
+                    changed = True
+            else:
+                if key not in old or old[key] != value:
+                    old[key] = value
+                    changed = True
+
+        return changed
+    
+    @classmethod
+    def deepClone(cls, obj: dict) -> dict:
+        if obj is None:
+            return None
+        try:
+            return deepcopy(obj)
+        except Exception:
+            print("[WARNING!] The object is uncopyable!")
+            return obj
+        
+    @classmethod
+    def compareObjects(cls, objA, objB):
+        if objA is objB:
+            return True
+
+        if type(objA) != type(objB):
+            return False
+
+        if isinstance(objA, (int, float, str, bool, type(None))):
+            return objA == objB
+
+        if isinstance(objA, (list, tuple, set)):
+            return len(objA) == len(objB) and all(cls.compareObjects(a, b) for a, b in zip(objA, objB))
+
+        if isinstance(objA, dict):
+            if objA.keys() != objB.keys():
+                return False
+            return all(cls.compareObjects(objA[k], objB[k]) for k in objA)
+
+        try:
+            return objA == objB
+        except Exception:
+            pass
+
+        if hasattr(objA, "__dict__") and hasattr(objB, "__dict__"):
+            return cls.compareObjects(objA.__dict__, objB.__dict__)
+
+        return False
+
+    
+class SoundService:
     _initialized = False
     _supported = (".wav", ".mp3")
 
@@ -81,9 +237,6 @@ class SoundService:
     music_volume = 1.0
     sfx_volume = 1.0
 
-    # -------------------
-    # Init
-    # -------------------
     @classmethod
     def init(cls):
         if cls._initialized:
@@ -92,9 +245,6 @@ class SoundService:
         pygame.mixer.init()
         cls._initialized = True
 
-    # -------------------
-    # Load
-    # -------------------
     @classmethod
     def loadSound(cls, name: str, path: str):
         cls.init()
@@ -118,9 +268,6 @@ class SoundService:
 
                     cls.loadSound(name, full_path)
 
-    # -------------------
-    # Sound
-    # -------------------
     @classmethod
     def playSound(cls, name: str):
         if name in cls.sounds:
@@ -138,9 +285,6 @@ class SoundService:
 
         return cls.sounds[name].get_num_channels() > 0
 
-    # -------------------
-    # Music
-    # -------------------
     @classmethod
     def playMusic(cls, path: str, loop=True):
         cls.init()
@@ -157,9 +301,6 @@ class SoundService:
     def isMusicPlaying(cls) -> bool:
         return pygame.mixer.music.get_busy()
 
-    # -------------------
-    # Volume
-    # -------------------
     @classmethod
     def setMusicVolume(cls, volume: float):
         cls.music_volume = volume
