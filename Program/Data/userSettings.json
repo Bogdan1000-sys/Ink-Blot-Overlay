@@ -14,18 +14,12 @@
         "WidgetsMenu": {
             "opacity": 1.0,
             "volume": 1.0,
-            "position": [
-                503,
-                210
-            ]
+            "position": false
         },
         "GeneralSettings": {
             "opacity": 1.0,
             "volume": 1.0,
-            "position": [
-                804,
-                340
-            ]
+            "position": false
         },
         "Homepage": {
             "opacity": 1.0,
@@ -45,7 +39,10 @@
         "Clock": {
             "opacity": 1.0,
             "volume": 1.0,
-            "position": false
+            "position": [
+                79,
+                221
+            ]
         },
         "ConcentrationMode": {
             "opacity": 1.0,

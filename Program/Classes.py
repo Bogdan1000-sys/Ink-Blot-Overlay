@@ -84,11 +84,13 @@ menubarTextButtonStyle = '''
 
 # -------------- Classes --------------
 
-class LoadingDots(QLabel):
-    def __init__(self, parent=None, size=(75, 75)):
+class LoadingAnimation(QLabel):
+    def __init__(self, parent=None, size=(75, 75), type="bouncing-circles"):
+        """Types: bouncing-circles, bouncing-squares, fade-circles, fade-squares, gear-spinner"""
+
         super().__init__(parent)
 
-        movie = QMovie("Resources/Animated/loading-dots.gif")
+        movie = QMovie(f"Resources/Animated/Gif/{type}.gif")
 
         self.resize(size[0], size[1])
         movie.setScaledSize(QSize(size[0], size[1]))

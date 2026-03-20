@@ -83,7 +83,7 @@ from Classes import (
     WidgetButton, 
     UIApplication, 
     EmptyWindow,
-    LoadingDots
+    LoadingAnimation
 )
 
 if __name__ == "__main__":
@@ -110,7 +110,7 @@ class WidgetsMenuWindow(InteractableWindow):
             """)
             self.Cover.resize(self.width(), self.height())
 
-            self.Cover.LoadingDots = LoadingDots(self.Cover)
+            self.Cover.LoadingAnimation = LoadingAnimation(parent=self.Cover, type="bouncing-squares")
 
             self.Cover.show()
 
