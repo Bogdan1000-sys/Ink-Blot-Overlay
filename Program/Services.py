@@ -312,7 +312,3 @@ class SoundService:
 
         for sound in cls.sounds.values():
             sound.set_volume(volume)
-
-
-LocalizationService()
-SettingsService()

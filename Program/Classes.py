@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame, QSlider
-from PyQt6.QtCore import Qt, QRectF, QPropertyAnimation, QParallelAnimationGroup, QPoint, QTimer, pyqtSignal, QEvent, QObject
-from PyQt6.QtGui import QPainter, QColor, QBrush, QPainterPath, QPixmap, QPen, QCursor
-import subprocess, multiprocessing, keyboard, json, math, threading, os, time
+from PyQt6.QtCore import Qt, QRectF, QPropertyAnimation, QParallelAnimationGroup, QPoint, QTimer, pyqtSignal, QEvent, QObject, QSize
+from PyQt6.QtGui import QPainter, QColor, QBrush, QPainterPath, QPixmap, QPen, QCursor, QMovie
+import subprocess, multiprocessing, keyboard, json, math, threading, os
 
 # -- Services --
 from Services import (
@@ -13,6 +13,8 @@ from Services import (
 )
 
 SoundService.loadFolder("Resources/SFX")
+SettingsService.__init__()
+LocalizationService.__init__()
 
 # -- Functions --
 from Functions import GetQTime, applyStyleClass
@@ -81,6 +83,46 @@ menubarTextButtonStyle = '''
 '''
 
 # -------------- Classes --------------
+
+class LoadingDots(QLabel):
+    def __init__(self, parent=None, size=(75, 75)):
+        super().__init__(parent)
+
+        movie = QMovie("Resources/Animated/loading-dots.gif")
+
+        self.resize(size[0], size[1])
+        movie.setScaledSize(QSize(size[0], size[1]))
+
+        self.setProperty("class", "loadingDotsLabel")
+        self.setStyleSheet("""
+            QLabel[class='loadingDotsLabel'] {
+                background: transparent;
+                border: none;
+            }
+        """)
+
+        if parent: parent.installEventFilter(self)
+        self.centerInParent()
+
+        self.setMovie(movie)
+        self.show()
+        movie.start()
+
+    def centerInParent(self):
+        if self.parent():
+            parent_rect = self.parent().rect()
+            x = (parent_rect.width() - self.width()) // 2
+            y = (parent_rect.height() - self.height()) // 2
+            self.move(x, y)
+
+    def eventFilter(self, obj, event):
+        if obj == self.parent():
+            self.centerInParent()
+        return super().eventFilter(obj, event)
+
+    def resizeEvent(self, event):
+        self.centerInParent()
+        super().resizeEvent(event)
 
 class WidgetButton(QFrame):
     def __init__(self, parent, **kwargs):

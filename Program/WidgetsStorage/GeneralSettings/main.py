@@ -11,6 +11,9 @@ from Services import (
     LocalizationService
 )
 
+SettingsService.__init__()
+LocalizationService.__init__()
+
 # -- Functions --
 
 # -- Objects --

@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QFrame, QWidget, QScrollArea, QSizePolicy, QPushButton, QBoxLayout, QGraphicsOpacityEffect
 from PyQt6.QtCore import Qt, QEasingCurve, QPropertyAnimation, QPoint, QTimer
-from PyQt6.QtGui import QWheelEvent, QPixmap
+from PyQt6.QtGui import QWheelEvent, QPixmap, QMovie
 import sys, math, json, random
 
 # -- Services --
@@ -14,6 +14,9 @@ from Services import (
 )
 
 SoundService.loadFolder("Resources/SFX")
+SettingsService.__init__()
+LocalizationService.__init__()
+
 
 # -- Widgets --
 from Widgets import Widgets
@@ -75,7 +78,13 @@ with open(Pathes["WindowSettingsTemplate"], "r", encoding="utf-8") as wstFile:
     WindowSettingsTemplate = json.load(wstFile)
 
 # -- Script --
-from Classes import InteractableWindow, WidgetButton, UIApplication, EmptyWindow
+from Classes import (
+    InteractableWindow,
+    WidgetButton, 
+    UIApplication, 
+    EmptyWindow,
+    LoadingDots
+)
 
 if __name__ == "__main__":
     uiApp = UIApplication(sys.argv, appName="MainApplication")
@@ -100,6 +109,9 @@ class WidgetsMenuWindow(InteractableWindow):
                 }
             """)
             self.Cover.resize(self.width(), self.height())
+
+            self.Cover.LoadingDots = LoadingDots(self.Cover)
+
             self.Cover.show()
 
         def DestroyCover():

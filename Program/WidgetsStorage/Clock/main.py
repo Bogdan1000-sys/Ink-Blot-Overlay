@@ -10,6 +10,8 @@ from Services import (
     SettingsService
 )
 
+SettingsService.__init__()
+
 # -- Functions --
 
 # -- Objects --
