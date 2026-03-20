@@ -4,12 +4,17 @@ from PyQt6.QtGui import QPainter, QColor, QBrush, QPainterPath, QPixmap, QPen, Q
 import subprocess, multiprocessing, keyboard, json, math, threading, os, time
 
 # -- Services --
-from Services import CollectionService, SoundService
+from Services import (
+    CollectionService, 
+    SoundService,
+    SettingsService
+)
 
 SoundService.loadFolder("Resources/SFX")
 
 # -- Functions --
-from Functions import GetQTime, applyStyleClass, GetUserSettings, AppendUserSettings, CloneObject, RegisterAdaptableText
+from Functions import GetQTime, applyStyleClass, CloneObject, RegisterAdaptableText
+# from Functions import GetUserSettings, AppendUserSettings
 
 # -- Variables --
 
@@ -28,12 +33,6 @@ with open(Pathes["Constants"], "r", encoding="utf-8") as cFile:
     Constants = json.load(cFile)
 with open(Pathes["SettingOptions"], "r", encoding="utf-8") as soFile:
     SettingOptions = json.load(soFile)
-
-UserSettings = GetUserSettings()
-
-def UpdateUserSettings():
-    global UserSettings
-    UserSettings = GetUserSettings()
 
 # -- Common Styles --
 menubarButtonStyle = '''
@@ -148,7 +147,7 @@ class ConfirmExitWindow(QWidget):
     def __init__(self, parent=QObject, **kwargs):
         super().__init__(parent)
         
-        UpdateUserSettings()
+        SettingsService.updateUserSettings()
 
         self._data = kwargs or {}
 
@@ -161,7 +160,7 @@ class ConfirmExitWindow(QWidget):
         self.setWindowOpacity(0)
 
         self.showAnim = QPropertyAnimation(self, b"windowOpacity")
-        self.showAnim.setEndValue(UserSettings["Windows"][parent.objectName()]["opacity"])
+        self.showAnim.setEndValue(SettingsService.settings["Windows"][parent.objectName()]["opacity"])
         self.showAnim.setDuration(GetQTime(0.2))
         self.showAnim.start()
 
@@ -273,10 +272,10 @@ class WidgetSettingsWindow(QWidget):
     def __init__(self, parent=QObject, **kwargs):
         super().__init__(parent)
 
-        UpdateUserSettings()
+        SettingsService.updateUserSettings()
         CollectionService.addTag(self, "commonOpacityWindow")
 
-        self._finalSettings = CloneObject(UserSettings["Windows"][parent.objectName()])
+        self._finalSettings = CloneObject(SettingsService.settings["Windows"][parent.objectName()])
         countSettings = 0
         for key in self._finalSettings.keys():
             if key in SettingOptions: countSettings += 1
@@ -331,7 +330,7 @@ class WidgetSettingsWindow(QWidget):
 
         self.showAnim1 = QPropertyAnimation(self, b"windowOpacity")
         self.showAnim1.setStartValue(0)
-        self.showAnim1.setEndValue(UserSettings["Windows"][parent.objectName()]["opacity"])
+        self.showAnim1.setEndValue(SettingsService.settings["Windows"][parent.objectName()]["opacity"])
         self.showAnim1.setDuration(GetQTime(0.2))
 
         self.showAnim2 = QPropertyAnimation(self, b"pos")
@@ -393,7 +392,7 @@ class WidgetSettingsWindow(QWidget):
                         self._optionsContainer.Animations = {}
                         self._optionsContainer.Animations["showAnim"] = QPropertyAnimation(self._optionsContainer, b"windowOpacity")
                         self._optionsContainer.Animations["showAnim"].setStartValue(0)
-                        self._optionsContainer.Animations["showAnim"].setEndValue(UserSettings["Windows"][parent.objectName()]["opacity"])
+                        self._optionsContainer.Animations["showAnim"].setEndValue(SettingsService.settings["Windows"][parent.objectName()]["opacity"])
                         self._optionsContainer.Animations["showAnim"].setDuration(GetQTime(0.1))
 
                         self._optionsContainer.Animations["hideAnim"] = QPropertyAnimation(self._optionsContainer, b"windowOpacity")
@@ -468,7 +467,7 @@ class WidgetSettingsWindow(QWidget):
                                 40
                             )
 
-                            UpdateUserSettings()
+                            SettingsService.updateUserSettings()
 
                             slider = QSlider(Qt.Orientation.Horizontal)
                             slider.setProperty("class", "slider")
@@ -496,7 +495,7 @@ class WidgetSettingsWindow(QWidget):
 
                             slider.setMinimum( int(options["min"]*100) )
                             slider.setMaximum( int(options["max"]*100) )
-                            slider.setValue( int(UserSettings["Windows"][parent.objectName()][sectionName]*100) )
+                            slider.setValue( int(SettingsService.settings["Windows"][parent.objectName()][sectionName]*100) )
 
                             slider.valueChanged.connect(updateValue)
 
@@ -539,7 +538,7 @@ class WidgetSettingsWindow(QWidget):
             QTimer.singleShot(GetQTime(0.1), lambda: setattr(self, "_optionsContainer", None))
         except: pass
 
-        AppendUserSettings("Windows", {
+        SettingsService.appendUserSettings("Windows", {
                 self.parent().objectName(): dict(self._finalSettings)
             }
         )
@@ -1106,7 +1105,7 @@ class InteractableWindow(QMainWindow):
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
 
-        UpdateUserSettings()        
+        SettingsService.updateUserSettings()
         CollectionService.addTag(self, "commonOpacityWindow")
 
         self._data = kwargs or {}
@@ -1121,7 +1120,7 @@ class InteractableWindow(QMainWindow):
 
         self.setObjectName(self._data["name"])
 
-        Settings = UserSettings["Windows"][self.objectName()]
+        Settings = SettingsService.settings["Windows"][self.objectName()]
         if Settings.get("position", False) != False:
             self.move(Settings["position"][0], Settings["position"][1])
 
@@ -1333,9 +1332,9 @@ class InteractableWindow(QMainWindow):
             self.dragging = False
             current_pos = self.pos()
             
-            currentSettings = UserSettings["Windows"][self.objectName()]
+            currentSettings = SettingsService.settings["Windows"][self.objectName()]
             currentSettings["position"] = [current_pos.x(), current_pos.y()]
-            AppendUserSettings("Windows", {
+            SettingsService.appendUserSettings("Windows", {
                 self.objectName(): currentSettings
             })
         return super().mouseReleaseEvent(event)
@@ -1392,7 +1391,7 @@ class InteractableWindow(QMainWindow):
         dialog.show()
 
         dialog.showAnim = QPropertyAnimation(dialog, b"windowOpacity")
-        dialog.showAnim.setEndValue(UserSettings["Windows"][self.objectName()]["opacity"])
+        dialog.showAnim.setEndValue(SettingsService.settings["Windows"][self.objectName()]["opacity"])
         dialog.showAnim.setDuration(GetQTime(0.2))
         dialog.showAnim.start()
 
@@ -1532,7 +1531,7 @@ class InteractableWindow(QMainWindow):
         self._hideAnimGroup.start()
 
     def Show(self, onFinished=None):
-        UpdateUserSettings()
+        SettingsService.updateUserSettings()
         showAnims = []
 
         for widget in CollectionService.getTagged("commonOpacityWindow"):
@@ -1543,7 +1542,7 @@ class InteractableWindow(QMainWindow):
 
                 widget.ShowAnim = QPropertyAnimation(widget, b"windowOpacity")
                 widget.ShowAnim.setStartValue(0)
-                widget.ShowAnim.setEndValue(UserSettings["Windows"][self.objectName()]["opacity"])
+                widget.ShowAnim.setEndValue(SettingsService.settings["Windows"][self.objectName()]["opacity"])
                 widget.ShowAnim.setDuration(GetQTime(0.2))
 
                 currentPos = widget.pos()

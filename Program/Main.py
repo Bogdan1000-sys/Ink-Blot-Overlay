@@ -4,7 +4,12 @@ from PyQt6.QtGui import QWheelEvent, QPixmap
 import sys, math, json, random
 
 # -- Services --
-from Services import CollectionService, ConnectionListener, SoundService
+from Services import (
+    CollectionService, 
+    ConnectionListener, 
+    SoundService,
+    SettingsService
+)
 
 SoundService.loadFolder("Resources/SFX")
 
@@ -24,7 +29,7 @@ with open("Data/Pathes.json", "r", encoding="utf-8") as pFile:
     Pathes = json.load(pFile)
 
 # -- Functions --
-from Functions import GetUserSettings, applyStyleClass, RegisterAdaptableText, AppendUserSettings, GetQTime, CloneAnimation, PrintText, CompareObjects
+from Functions import applyStyleClass, RegisterAdaptableText, GetQTime, CloneAnimation, PrintText, CompareObjects
 
 def RunWMultiprocess(key, args=(), joinProcess=False):
     if key == None: return
@@ -66,14 +71,6 @@ with open(Pathes["Data"], "r", encoding="utf-8") as dataFile:
     Data = json.load(dataFile)
 with open(Pathes["WindowSettingsTemplate"], "r", encoding="utf-8") as wstFile:
     WindowSettingsTemplate = json.load(wstFile)
-
-UserSettings = None
-
-def UpdateUserSettings():
-    global UserSettings
-    UserSettings = GetUserSettings()
-
-UpdateUserSettings()
 
 # -- Script --
 from Classes import InteractableWindow, WidgetButton, UIApplication, EmptyWindow
@@ -138,14 +135,15 @@ class WidgetsMenuWindow(InteractableWindow):
 
     def UpdatePreviewInfo(self, useSound=True):
         self.codeFunctions["DestroyCover"]()
-        UpdateUserSettings()
+
+        SettingsService.updateUserSettings()
 
         widgetData = Data["WidgetsData"][self.selectedWidget]
 
         widgetButtons = CollectionService.getTagged("widgetButton")
 
-        selectedWidgets = UserSettings.get("General", {}).get("selectedWidgets", [])
-        activeWidgets = UserSettings.get("General", {}).get("activeWidgets", [])
+        selectedWidgets = SettingsService.settings.get("General", {}).get("selectedWidgets", [])
+        activeWidgets = SettingsService.settings.get("General", {}).get("activeWidgets", [])
 
         RegisterAdaptableText(self.InfoItems["NameLabel"], widgetData["Name"])
         RegisterAdaptableText(self.InfoItems["DescriptionLabel"], widgetData["Description"])
@@ -236,7 +234,7 @@ class WidgetsMenuWindow(InteractableWindow):
                     TerminateActive()
                     activeWidgets.clear()
 
-            AppendUserSettings("General", {"selectedWidgets": selectedWidgets, "activeWidgets": activeWidgets})
+            SettingsService.appendUserSettings("General", {"selectedWidgets": selectedWidgets, "activeWidgets": activeWidgets})
             QTimer.singleShot(GetQTime(0.1), self.UpdatePreviewInfo)
 
         self.wcButtons["select"].clicked.connect(lambda: OnClick("select"))
@@ -330,13 +328,13 @@ class WidgetsMenuWindow(InteractableWindow):
     def __init__(self, **kwargs):
         super().__init__(**kwargs) 
 
-        UpdateUserSettings()
+        SettingsService.updateUserSettings()
 
         self.setWindowTitle(Constants["Title"])
         self.resize(Constants["Size"]["width"], Constants["Size"]["height"])
         screen = uiApp.primaryScreen().availableGeometry()
 
-        if UserSettings["Windows"][self.objectName()].get("position", False) == False:
+        if SettingsService.settings["Windows"][self.objectName()].get("position", False) == False:
             self.move(
                 screen.left() + (screen.width() - self.width()) // 2,
                 screen.top() + (screen.height() - self.height()) // 2
@@ -729,8 +727,8 @@ class WidgetsMenuWindow(InteractableWindow):
         self.UpdatePreviewInfo(False)
     
     def onFastClose(self):
-        # UpdateUserSettings()
-        # activeWidgets = UserSettings.get("General", {}).get("activeWidgets", [])
+        # SettingsService.updateUserSettings()
+        # activeWidgets = SettingsService.settings.get("General", {}).get("activeWidgets", [])
         # for widget in activeWidgets:
         #     uiApp.mpConnections[widget].send("code:Close")
 
@@ -742,7 +740,7 @@ class WelcomeWindow(EmptyWindow):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        UpdateUserSettings()
+        SettingsService.updateUserSettings()
 
         self.Animations = {}
         self.SFX = {}
@@ -1182,8 +1180,7 @@ class WelcomeWindow(EmptyWindow):
                     anim.finished.connect(lambda a=anim:AnimateHover(a))
 
             def printOptions():
-                UpdateUserSettings()
-                global UserSettings
+                SettingsService.updateUserSettings()
                 
                 Options = self.OptionsContainer.firstLayerContainer.Options
 
@@ -1260,8 +1257,8 @@ class WelcomeWindow(EmptyWindow):
                         optionBasic()
                         createNewLayerOptions([], Container=self.OptionsContainer.secondLayerContainer)
 
-                        AppendUserSettings("General", {"selectedWidgets": [], "activeWidgets": []})
-                        if resetWidgets: AppendUserSettings("Windows", WindowSettingsTemplate)
+                        SettingsService.appendUserSettings("General", {"selectedWidgets": [], "activeWidgets": []})
+                        if resetWidgets: SettingsService.appendUserSettings("Windows", WindowSettingsTemplate)
 
                         self.Hide(onFinished=createMenuWindow, Hard=True)
 
@@ -1278,12 +1275,11 @@ class WelcomeWindow(EmptyWindow):
                         optionBasic()
                         createNewLayerOptions([], Container=self.OptionsContainer.secondLayerContainer)
 
-                        UpdateUserSettings()
-                        global UserSettings
+                        SettingsService.updateUserSettings()
 
                         def load():
                             createMenuWindow()
-                            for i, widget in enumerate(UserSettings["General"]["activeWidgets"]):
+                            for i, widget in enumerate(SettingsService.settings["General"]["activeWidgets"]):
                                 QTimer.singleShot(GetQTime(0.25) * i, lambda w=widget: RunWMultiprocess(w))
 
                         self.Hide(onFinished=load, Hard=True)  
@@ -1295,11 +1291,10 @@ class WelcomeWindow(EmptyWindow):
                         optionBasic()
                         createNewLayerOptions([], Container=self.OptionsContainer.secondLayerContainer)
                         
-                        UpdateUserSettings()
-                        global UserSettings
-
-                        if len(UserSettings["General"]["activeWidgets"]) > 0:
-                            AppendUserSettings("General", {"selectedWidgets": UserSettings["General"]["activeWidgets"], "activeWidgets": []})
+                        SettingsService.updateUserSettings()
+                        
+                        if len(SettingsService.settings["General"]["activeWidgets"]) > 0:
+                            SettingsService.appendUserSettings("General", {"selectedWidgets": SettingsService.settings["General"]["activeWidgets"], "activeWidgets": []})
 
                         self.Hide(onFinished=createMenuWindow, Hard=True)  
 
@@ -1310,10 +1305,10 @@ class WelcomeWindow(EmptyWindow):
                 def newPack():
                     optionBasic()
 
-                    UpdateUserSettings()
-                    global UserSettings, widgetsMenuWindow
+                    SettingsService.updateUserSettings()
+                    global widgetsMenuWindow
 
-                    if len(UserSettings["General"]["activeWidgets"]) > 0 or len(UserSettings["General"]["selectedWidgets"]) > 0:
+                    if len(SettingsService.settings["General"]["activeWidgets"]) > 0 or len(SettingsService.settings["General"]["selectedWidgets"]) > 0:
                         opButtons = createNewLayerOptions(
                             [
                                 {"key": "Start", "textKey": "labels/homePage/options/newPack_Options/start"},
@@ -1331,7 +1326,7 @@ class WelcomeWindow(EmptyWindow):
                         except Exception: pass
                         
                     else:
-                        if CompareObjects(UserSettings["Windows"], WindowSettingsTemplate) == True:
+                        if CompareObjects(SettingsService.settings["Windows"], WindowSettingsTemplate) == True:
                             OptionsModule.onStart()
                         else:
                             opButtons = createNewLayerOptions(
@@ -1356,10 +1351,9 @@ class WelcomeWindow(EmptyWindow):
                 def loadPack():
                     optionBasic()
 
-                    UpdateUserSettings()
-                    global UserSettings
+                    SettingsService.updateUserSettings()
 
-                    if len(UserSettings["General"]["activeWidgets"]) > 0:
+                    if len(SettingsService.settings["General"]["activeWidgets"]) > 0:
                         opButtons = createNewLayerOptions(
                             [
                                 {"key": "Run", "textKey": "labels/homePage/options/loadPack_Options/run"},
@@ -1394,7 +1388,7 @@ class WelcomeWindow(EmptyWindow):
                 indexOfPrinting += 1
                 Options["newPack"].clicked.connect(newPack)
                 
-                if len(UserSettings["General"]["selectedWidgets"]) > 0 or len(UserSettings["General"]["activeWidgets"]) > 0:
+                if len(SettingsService.settings["General"]["selectedWidgets"]) > 0 or len(SettingsService.settings["General"]["activeWidgets"]) > 0:
                     PrintElement(Options["loadPack"], indexOfPrinting * 0.5)
                     indexOfPrinting += 1
                     Options["loadPack"].clicked.connect(loadPack)

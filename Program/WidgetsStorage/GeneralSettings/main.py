@@ -5,10 +5,13 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
 sys.path.insert(0, ROOT)
 
 # -- Services --
-from Services import ConnectionListener
+from Services import (
+    ConnectionListener,
+    SettingsService
+)
 
 # -- Functions --
-from Functions import GetUserSettings, AppendUserSettings, RegisterAdaptableText
+from Functions import RegisterAdaptableText
 
 # -- Objects --
 generalSettingsWindow = None
@@ -23,19 +26,11 @@ with open(Pathes["Constants"], "r", encoding="utf-8") as cFile:
 with open(Pathes["Data"], "r", encoding="utf-8") as dataFile:
     Data = json.load(dataFile)
 
-UserSettings = None
-
-def UpdateUserSettings():
-    global UserSettings
-    UserSettings = GetUserSettings()
-
-UpdateUserSettings()
-
 # -- Scripts --
 from Classes import ModifiedWindow, UIApplication
 
 def main(connection):
-    global generalSettingsWindow, UserSettings
+    global generalSettingsWindow
 
     uiApp = UIApplication(sys.argv, appName="GeneralSettingsApplication")
 
@@ -43,13 +38,13 @@ def main(connection):
         def __init__(self, **kwargs):
             super().__init__(**kwargs) 
 
-            UpdateUserSettings()
+            SettingsService.updateUserSettings()
 
             self.setWindowTitle('General Settings')
             self.resize(400, 600)
             screen = uiApp.primaryScreen().availableGeometry()
 
-            if UserSettings["Windows"][self.objectName()].get("position", False) == False:
+            if SettingsService.settings["Windows"][self.objectName()].get("position", False) == False:
                 self.move(
                     screen.left() + random.randint(0, screen.width() - self.width()),
                     screen.top() + (screen.height() - self.height()) // 2

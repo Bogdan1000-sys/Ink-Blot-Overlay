@@ -125,7 +125,7 @@ class SettingsService:
     
     @classmethod
     def __init__(cls):
-        pass
+        cls.updateUserSettings()
 
     @classmethod
     def updateUserSettings(cls):
