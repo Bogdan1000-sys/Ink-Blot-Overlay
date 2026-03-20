@@ -48,7 +48,6 @@ class CollectionService:
         widgets = [w for w in cls._registry.get(tag, []) if w is not None]
         cls._registry[tag] = widgets
         return widgets[0] if widgets else None
-    
 
 class ConnectionListener(QObject):
     messageReceived = pyqtSignal(object)
@@ -79,7 +78,8 @@ class LocalizationService:
 
     @classmethod
     def __init__(cls):
-        with open(cls.__dictPath, "r", encoding="utf-8") as dFile: cls.__dictionary = json.load(dFile)
+        with open(cls.__dictPath, "r", encoding="utf-8") as dFile:
+            cls.__dictionary = json.load(dFile)
     
     @classmethod
     def registerAdaptableText(cls, obj: QLabel, key: str):
@@ -90,11 +90,12 @@ class LocalizationService:
     @classmethod
     def getAdaptedTextFromDictionary(cls, key: str):
         keyParts = key.split("/")
+        SettingsService.updateUserSettings()
 
-        language = SettingsService.getUserSettings().get("General", {}).get("language", "eng")
+        language = SettingsService.settings.get("General", {}).get("language", "eng")
 
         path = cls.__dictionary[language]
-        
+
         for key in keyParts:
             if key in path:
                 path = path[key]
@@ -226,7 +227,6 @@ class ObjectService:
             return cls.compareObjects(objA.__dict__, objB.__dict__)
 
         return False
-
     
 class SoundService:
     _initialized = False
@@ -312,3 +312,7 @@ class SoundService:
 
         for sound in cls.sounds.values():
             sound.set_volume(volume)
+
+
+LocalizationService()
+SettingsService()

@@ -1,6 +1,6 @@
 {
     "General": {
-        "language": "eng",
+        "language": "rus",
         "selectedWidgets": [],
         "activeWidgets": [],
         "volume": 0.5
@@ -14,18 +14,12 @@
         "WidgetsMenu": {
             "opacity": 1.0,
             "volume": 1.0,
-            "position": [
-                456,
-                227
-            ]
+            "position": false
         },
         "GeneralSettings": {
             "opacity": 1.0,
             "volume": 1.0,
-            "position": [
-                44,
-                273
-            ]
+            "position": false
         },
         "Homepage": {
             "opacity": 1.0,

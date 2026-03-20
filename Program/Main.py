@@ -8,7 +8,9 @@ from Services import (
     CollectionService, 
     ConnectionListener, 
     SoundService,
-    SettingsService
+    SettingsService,
+    LocalizationService,
+    ObjectService
 )
 
 SoundService.loadFolder("Resources/SFX")
@@ -29,7 +31,7 @@ with open("Data/Pathes.json", "r", encoding="utf-8") as pFile:
     Pathes = json.load(pFile)
 
 # -- Functions --
-from Functions import applyStyleClass, RegisterAdaptableText, GetQTime, CloneAnimation, PrintText, CompareObjects
+from Functions import applyStyleClass, GetQTime, CloneAnimation, PrintText
 
 def RunWMultiprocess(key, args=(), joinProcess=False):
     if key == None: return
@@ -145,21 +147,21 @@ class WidgetsMenuWindow(InteractableWindow):
         selectedWidgets = SettingsService.settings.get("General", {}).get("selectedWidgets", [])
         activeWidgets = SettingsService.settings.get("General", {}).get("activeWidgets", [])
 
-        RegisterAdaptableText(self.InfoItems["NameLabel"], widgetData["Name"])
-        RegisterAdaptableText(self.InfoItems["DescriptionLabel"], widgetData["Description"])
+        LocalizationService.registerAdaptableText(self.InfoItems["NameLabel"], widgetData["Name"])
+        LocalizationService.registerAdaptableText(self.InfoItems["DescriptionLabel"], widgetData["Description"])
 
         if self.selectedWidget in selectedWidgets:
-            RegisterAdaptableText(self.wcButtons["select"].label, "buttons/unselect")
+            LocalizationService.registerAdaptableText(self.wcButtons["select"].label, "buttons/unselect")
             applyStyleClass(self.wcButtons["select"], "wcButton:unselect")
         else:
-            RegisterAdaptableText(self.wcButtons["select"].label, "buttons/select")
+            LocalizationService.registerAdaptableText(self.wcButtons["select"].label, "buttons/select")
             applyStyleClass(self.wcButtons["select"], "wcButton")
 
         if self.selectedWidget in activeWidgets:
-            RegisterAdaptableText(self.wcButtons["activate"].label, "buttons/deactivate")
+            LocalizationService.registerAdaptableText(self.wcButtons["activate"].label, "buttons/deactivate")
             applyStyleClass(self.wcButtons["activate"], "wcButton:deactivate")
 
-            RegisterAdaptableText(self.wcButtons["activateSel"].label, "buttons/deactivateAll")
+            LocalizationService.registerAdaptableText(self.wcButtons["activateSel"].label, "buttons/deactivateAll")
             applyStyleClass(self.wcButtons["activateSel"], "wcButton:deactivate")
 
             self.wcButtons["select"].hide()
@@ -168,10 +170,10 @@ class WidgetsMenuWindow(InteractableWindow):
             else:
                 self.wcButtons["activateSel"].show()
         else:
-            RegisterAdaptableText(self.wcButtons["activate"].label, "buttons/activate")
+            LocalizationService.registerAdaptableText(self.wcButtons["activate"].label, "buttons/activate")
             applyStyleClass(self.wcButtons["activate"], "wcButton")
 
-            RegisterAdaptableText(self.wcButtons["activateSel"].label, "buttons/activateSel")
+            LocalizationService.registerAdaptableText(self.wcButtons["activateSel"].label, "buttons/activateSel")
             applyStyleClass(self.wcButtons["activateSel"], "wcButton")
 
             self.wcButtons["select"].show()
@@ -535,7 +537,7 @@ class WidgetsMenuWindow(InteractableWindow):
         def CreateInterButton(key: str):
             button = QPushButton(parent=self.ButtonsContainer)
             button.label = QLabel("[ Missing ]", parent=button)
-            RegisterAdaptableText(button.label, f"buttons/{key}")    
+            LocalizationService.registerAdaptableText(button.label, f"buttons/{key}")    
             button.label.setProperty("class", "wcButtonLabel")
             button.label.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
             button.label.setWordWrap(True)
@@ -566,7 +568,7 @@ class WidgetsMenuWindow(InteractableWindow):
 
         def createContainer(containerName):
             title = QLabel(containerName)
-            RegisterAdaptableText(title, "labels/"+containerName)
+            LocalizationService.registerAdaptableText(title, "labels/"+containerName)
             
             title.setProperty("class", "containerTitle")
             title.setStyleSheet("""
@@ -1008,21 +1010,21 @@ class WelcomeWindow(EmptyWindow):
 
         Options["newPack"] = QPushButton(self.OptionsContainer, text="New Pack")
         Options["newPack"].setProperty("class", "menuOption")
-        RegisterAdaptableText(Options["newPack"], "labels/homePage/options/newPack")
+        LocalizationService.registerAdaptableText(Options["newPack"], "labels/homePage/options/newPack")
         Options["newPack"].setStyleSheet(menuOptionStyle)
         Options["newPack"].resize(self.width(), 20)
         self.OptionsContainer.firstLayerContainer.mainLayout.addWidget(Options["newPack"], alignment=Qt.AlignmentFlag.AlignLeft)
 
         Options["loadPack"] = QPushButton(self.OptionsContainer, text="Load Pack")
         Options["loadPack"].setProperty("class", "menuOption")
-        RegisterAdaptableText(Options["loadPack"], "labels/homePage/options/loadPack")
+        LocalizationService.registerAdaptableText(Options["loadPack"], "labels/homePage/options/loadPack")
         Options["loadPack"].setStyleSheet(menuOptionStyle)
         Options["loadPack"].resize(self.width(), 20)
         self.OptionsContainer.firstLayerContainer.mainLayout.addWidget(Options["loadPack"], alignment=Qt.AlignmentFlag.AlignLeft)
         
         Options["exit"] = QPushButton(self.OptionsContainer, text="Exit")
         Options["exit"].setProperty("class", "menuOption")
-        RegisterAdaptableText(Options["exit"], "labels/homePage/options/exit")
+        LocalizationService.registerAdaptableText(Options["exit"], "labels/homePage/options/exit")
         Options["exit"].setStyleSheet(menuOptionStyle)
         Options["exit"].resize(self.width(), 20)
         self.OptionsContainer.firstLayerContainer.mainLayout.addWidget(Options["exit"], alignment=Qt.AlignmentFlag.AlignLeft)
@@ -1109,9 +1111,9 @@ class WelcomeWindow(EmptyWindow):
 
         # Setuping --------------------------------------------------------------------------------------------------------------
 
-        RegisterAdaptableText(self.HelloTitle, "labels/homePage/hello")
-        RegisterAdaptableText(self.text1, "labels/homePage/text1")
-        RegisterAdaptableText(self.text2, "labels/homePage/text2")
+        LocalizationService.registerAdaptableText(self.HelloTitle, "labels/homePage/hello")
+        LocalizationService.registerAdaptableText(self.text1, "labels/homePage/text1")
+        LocalizationService.registerAdaptableText(self.text2, "labels/homePage/text2")
 
         self.BackgroundFrame.show()
 
@@ -1231,7 +1233,7 @@ class WelcomeWindow(EmptyWindow):
 
                         NewLayerOptions[key] = QPushButton(Container, text=key)
                         NewLayerOptions[key].setProperty("class", "menuLayerOption")
-                        RegisterAdaptableText(NewLayerOptions[key], textKey)
+                        LocalizationService.registerAdaptableText(NewLayerOptions[key], textKey)
                         NewLayerOptions[key].setStyleSheet(menuOptionStyle)
                         NewLayerOptions[key].resize(self.width(), 20)
                         
@@ -1326,7 +1328,7 @@ class WelcomeWindow(EmptyWindow):
                         except Exception: pass
                         
                     else:
-                        if CompareObjects(SettingsService.settings["Windows"], WindowSettingsTemplate) == True:
+                        if ObjectService.compareObjects(SettingsService.settings["Windows"], WindowSettingsTemplate) == True:
                             OptionsModule.onStart()
                         else:
                             opButtons = createNewLayerOptions(

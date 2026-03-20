@@ -7,14 +7,16 @@ import subprocess, multiprocessing, keyboard, json, math, threading, os, time
 from Services import (
     CollectionService, 
     SoundService,
-    SettingsService
+    SettingsService,
+    LocalizationService,
+    ObjectService
 )
 
 SoundService.loadFolder("Resources/SFX")
 
 # -- Functions --
-from Functions import GetQTime, applyStyleClass, CloneObject, RegisterAdaptableText
-# from Functions import GetUserSettings, AppendUserSettings
+from Functions import GetQTime, applyStyleClass
+# from Functions import CloneObject
 
 # -- Variables --
 
@@ -119,7 +121,7 @@ class WidgetButton(QFrame):
         self.Icon.setPixmap(IconPixmap)
 
         self.nameLabel = QLabel("Name", parent=self)
-        RegisterAdaptableText(self.nameLabel, self._data["data"]["Name"])
+        LocalizationService.registerAdaptableText(self.nameLabel, self._data["data"]["Name"])
 
         self.nameLabel.resize(self._data["size"][0], 30)
         self.nameLabel.move(0, self._data["size"][1]-30)
@@ -174,7 +176,7 @@ class ConfirmExitWindow(QWidget):
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.label = QLabel("Q")
-        RegisterAdaptableText(self.label, "labels/exitConfirmation/Q")
+        LocalizationService.registerAdaptableText(self.label, "labels/exitConfirmation/Q")
         
         self.label.setStyleSheet("color: white; font-size: 14px; font-family: 'Courier New', Courier, monospace;")
         self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -185,10 +187,10 @@ class ConfirmExitWindow(QWidget):
         layout.addLayout(btn_layout)
 
         self.btn_yes = QPushButton("Y")
-        RegisterAdaptableText(self.btn_yes, "labels/exitConfirmation/Y")
+        LocalizationService.registerAdaptableText(self.btn_yes, "labels/exitConfirmation/Y")
 
         self.btn_no = QPushButton("N")
-        RegisterAdaptableText(self.btn_no, "labels/exitConfirmation/N")
+        LocalizationService.registerAdaptableText(self.btn_no, "labels/exitConfirmation/N")
 
         for btn in (self.btn_yes, self.btn_no):
             btn.setFixedSize(80, 30)
@@ -275,7 +277,7 @@ class WidgetSettingsWindow(QWidget):
         SettingsService.updateUserSettings()
         CollectionService.addTag(self, "commonOpacityWindow")
 
-        self._finalSettings = CloneObject(SettingsService.settings["Windows"][parent.objectName()])
+        self._finalSettings = ObjectService.deepClone(SettingsService.settings["Windows"][parent.objectName()])
         countSettings = 0
         for key in self._finalSettings.keys():
             if key in SettingOptions: countSettings += 1
@@ -368,7 +370,7 @@ class WidgetSettingsWindow(QWidget):
                 }
             """)
 
-            RegisterAdaptableText(button, "settings/"+key)
+            LocalizationService.registerAdaptableText(button, "settings/"+key)
             
             def makeClickedFunction(sectionName):
                 def onClicked():
@@ -1164,7 +1166,7 @@ class InteractableWindow(QMainWindow):
         self.iconsLayout.addWidget(self.icons["mainIcon"])
 
         self.uis["holdAlt"] = QLabel("Hold Alt", parent=self)
-        RegisterAdaptableText(self.uis["holdAlt"], "labels/HoldAlt")
+        LocalizationService.registerAdaptableText(self.uis["holdAlt"], "labels/HoldAlt")
         
         self.uis["holdAlt"].setProperty("class", "passive")
         self.uis["holdAlt"].setStyleSheet('''
@@ -1191,7 +1193,7 @@ class InteractableWindow(QMainWindow):
         self.menuBarLayout.addWidget(self.uis["holdAlt"], 0, Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignRight)
         
         self.buttons["settingsButton"] = QPushButton("Settings")
-        RegisterAdaptableText(self.buttons["settingsButton"], "labels/Settings")        
+        LocalizationService.registerAdaptableText(self.buttons["settingsButton"], "labels/Settings")        
         self.buttons["settingsButton"].setProperty("class", "menubarButton")
         self.buttons["settingsButton"].setStyleSheet(menubarTextButtonStyle)
 
@@ -1242,7 +1244,7 @@ class InteractableWindow(QMainWindow):
         self.menuBarLayout.addWidget(self.buttons["closeButton"])
 
         self.uis["mainTitle"] = QLabel("Ink Blot Overlay")
-        RegisterAdaptableText(self.uis["mainTitle"], self._data["titleKey"])
+        LocalizationService.registerAdaptableText(self.uis["mainTitle"], self._data["titleKey"])
         
         self.uis["mainTitle"].setProperty("class", "mainTitle")
         self.uis["mainTitle"].setStyleSheet('''

@@ -5,10 +5,12 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
 sys.path.insert(0, ROOT)
 
 # -- Services --
-from Services import ConnectionListener
+from Services import (
+    ConnectionListener,
+    SettingsService
+)
 
 # -- Functions --
-from Functions import GetUserSettings, AppendUserSettings
 
 # -- Objects --
 clockSettingWindow = None
@@ -23,19 +25,11 @@ with open(Pathes["Constants"], "r", encoding="utf-8") as cFile:
 with open(Pathes["Data"], "r", encoding="utf-8") as dataFile:
     Data = json.load(dataFile)
 
-UserSettings = None
-
-def UpdateUserSettings():
-    global UserSettings
-    UserSettings = GetUserSettings()
-
-UpdateUserSettings()
-
 # -- Scripts --
 from Classes import ModifiedWindow, UIApplication
 
 def main(connection):
-    global clockSettingWindow, UserSettings
+    global clockSettingWindow
 
     uiApp = UIApplication(sys.argv, appName="ClockApplication")
 
@@ -43,13 +37,13 @@ def main(connection):
         def __init__(self, **kwargs):
             super().__init__(**kwargs)
             
-            UpdateUserSettings()
+            SettingsService.updateUserSettings()
 
             self.setWindowTitle('Clock Menu')
             self.resize(500, 600)
             screen = uiApp.primaryScreen().availableGeometry()
 
-            if UserSettings["Windows"][self.objectName()].get("position", False) == False:
+            if SettingsService.settings["Windows"][self.objectName()].get("position", False) == False:
                 self.move(
                     screen.left() + random.randint(0, screen.width() - self.width()),
                     screen.top() + (screen.height() - self.height()) // 2
@@ -62,10 +56,10 @@ def main(connection):
             return super().onFastClose()
 
         def onClose(self):
-            UpdateUserSettings()
-            activeWidgets = UserSettings.get("General", {}).get("activeWidgets", [])
+            SettingsService.updateUserSettings()
+            activeWidgets = SettingsService.settings.get("General", {}).get("activeWidgets", [])
             activeWidgets.remove(self.objectName())
-            AppendUserSettings("General", {
+            SettingsService.appendUserSettings("General", {
                 "activeWidgets": activeWidgets
             })
 

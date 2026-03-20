@@ -7,11 +7,11 @@ sys.path.insert(0, ROOT)
 # -- Services --
 from Services import (
     ConnectionListener,
-    SettingsService
+    SettingsService,
+    LocalizationService
 )
 
 # -- Functions --
-from Functions import RegisterAdaptableText
 
 # -- Objects --
 generalSettingsWindow = None
@@ -50,7 +50,7 @@ def main(connection):
                     screen.top() + (screen.height() - self.height()) // 2
                 )
 
-            RegisterAdaptableText(self.uis["holdAlt"], "labels/ALT")
+            LocalizationService.registerAdaptableText(self.uis["holdAlt"], "labels/ALT")
                 
             self.show()
 
