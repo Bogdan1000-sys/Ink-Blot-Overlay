@@ -12,13 +12,14 @@ from Services import (
     ObjectService
 )
 
-SoundService.loadFolder("Resources/SFX")
 SettingsService.__init__()
 LocalizationService.__init__()
+SoundService.__init__()
+
+SoundService.loadFolder("Resources/SFX")
 
 # -- Functions --
 from Functions import GetQTime, applyStyleClass
-# from Functions import CloneObject
 
 # -- Variables --
 
@@ -422,7 +423,7 @@ class WidgetSettingsWindow(QWidget):
                         return
                     
                     def CreateOptionsContainerBody():
-                        SoundService.playSound("ClickSound")
+                        SoundService.playSound("ClickSound", parent.objectName())
 
                         self._optionsContainer = OptionsContainer(parent=self.parent())
                         CollectionService.addTag(self._optionsContainer, "optionsContainer")
@@ -492,7 +493,7 @@ class WidgetSettingsWindow(QWidget):
 
                                 def makeButtonClickHandler(optionName):
                                     def onClick():
-                                        SoundService.playSound("ClickSound")
+                                        SoundService.playSound("ClickSound", parent.objectName())
 
                                         self._finalSettings[sectionName] = optionName
 
@@ -1251,7 +1252,7 @@ class InteractableWindow(QMainWindow):
                     self.settingsWindow = None
                 except: pass
 
-            SoundService.playSound("ClickSound")
+            SoundService.playSound("ClickSound", self.objectName())
 
             self.settingsWindow = WidgetSettingsWindow(parent=self, Width = self.buttons["settingsButton"].width(), Position = (button.mapToGlobal(button.rect().bottomLeft()) + QPoint(0, 2)) )
             self.settingsWindow.show()
@@ -1488,7 +1489,7 @@ class InteractableWindow(QMainWindow):
                 else:
                     QTimer.singleShot(GetQTime(0.5), soundHandler)
 
-            SoundService.playSound("FadeSound")
+            SoundService.playSound("FadeSound", self.objectName())
             soundHandler()
 
             self.Hide(onFinished=lambda: exit_app(), onStarted=self.onFastClose, Hard=True)
@@ -1562,7 +1563,7 @@ class InteractableWindow(QMainWindow):
             except: pass
 
         if not Hard:
-            SoundService.playSound("FadeSound")
+            SoundService.playSound("FadeSound", self.objectName())
 
         self._hideAnimGroup = QParallelAnimationGroup()
         for anim in hideAnims:
@@ -1601,7 +1602,7 @@ class InteractableWindow(QMainWindow):
             except:
                 pass
 
-        SoundService.playSound("FadeSound")
+        SoundService.playSound("FadeSound", self.objectName())
 
         self._showAnimGroup = QParallelAnimationGroup()
         for anim in showAnims:

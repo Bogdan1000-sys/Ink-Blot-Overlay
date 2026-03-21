@@ -7,10 +7,14 @@ sys.path.insert(0, ROOT)
 # -- Services --
 from Services import (
     ConnectionListener,
-    SettingsService
+    SettingsService,
+    SoundService
 )
 
 SettingsService.__init__()
+SoundService.__init__()
+
+SoundService.loadFolder("Resources/SFX")
 
 # -- Functions --
 

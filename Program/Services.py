@@ -10,7 +10,7 @@ class CollectionService:
 
     @classmethod
     def addTag(cls, widget, tag: str):
-        """Add tag to a widget"""
+        """Add tag to a QWidget"""
         widget_tags = widget.property("Tags") or set()
         widget_tags.add(tag)
         widget.setProperty("Tags", widget_tags)
@@ -19,7 +19,7 @@ class CollectionService:
 
     @classmethod
     def removeTag(cls, widget, tag: str):
-        """Remove tag from a widget"""
+        """Remove tag from a QWidget"""
         widget_tags = widget.property("Tags") or set()
         if tag in widget_tags:
             widget_tags.remove(tag)
@@ -32,12 +32,12 @@ class CollectionService:
 
     @classmethod
     def getTags(cls, widget):
-        """Get all tags of a widget"""
+        """Get all tags of a QWidget"""
         return list(widget.property("Tags") or [])
 
     @classmethod
     def getTagged(cls, tag: str):
-        """Get all widgets with a specific tag"""
+        """Get all QWidgets with a specific tag"""
         cls._registry[tag] = [
             w for w in cls._registry.get(tag, []) if w is not None
         ]
@@ -45,6 +45,7 @@ class CollectionService:
 
     @classmethod
     def getFirstTagged(cls, tag: str):
+        """Get first found QWidget with a specific tag"""
         widgets = [w for w in cls._registry.get(tag, []) if w is not None]
         cls._registry[tag] = widgets
         return widgets[0] if widgets else None
@@ -58,6 +59,7 @@ class ConnectionListener(QObject):
         self._running = True
 
     def start(self):
+        """Start signal listening"""
         threading.Thread(target=self._listen, daemon=True).start()
 
     def _listen(self):
@@ -70,6 +72,7 @@ class ConnectionListener(QObject):
                 break
 
     def stop(self):
+        """Stop signal listening"""
         self._running = False
 
 class LocalizationService:
@@ -83,12 +86,21 @@ class LocalizationService:
     
     @classmethod
     def registerAdaptableText(cls, obj: QLabel, key: str):
+        """
+        Register QLabel with localization adaptable content
+        obj: QLabel
+        key: path to content in dictionary
+        """
         CollectionService.addTag(obj, "adaptableTextWidget")
         obj.setProperty("textKey", key)
         obj.setText(cls.getAdaptedTextFromDictionary(key))
 
     @classmethod
     def getAdaptedTextFromDictionary(cls, key: str):
+        """
+        Get adapted text from dictionary using key
+        key: path to content in dictionary
+        """
         keyParts = key.split("/")
         SettingsService.updateUserSettings()
 
@@ -111,6 +123,12 @@ class LocalizationService:
         
     @classmethod
     def changeLanguage(cls, newLanguage: str, updateSettings=True):
+        """
+        Change content in all localization adaptable QLabels
+
+        newLanguage: (eng | rus | kg) [1st layer chapter of dictionary]
+        updateSettings: Change Language settings in userSettings.json to newLanguage?
+        """
         if updateSettings:
             generalChapter = SettingsService.getUserSettings().get("General", {})
             generalChapter["language"] = newLanguage
@@ -130,10 +148,12 @@ class SettingsService:
 
     @classmethod
     def updateUserSettings(cls):
+        """Update SettingsService.settings to current version of userSettings.json"""
         cls.settings = cls.getUserSettings()
 
     @classmethod
     def getUserSettings(cls) -> dict:
+        """Get dict of settings from userSettings.json"""
         with open(cls.__path, "r", encoding="utf-8") as usFile:
             return json.load(usFile)
         
@@ -144,6 +164,7 @@ class SettingsService:
 
     @classmethod
     def setUserSettings(cls, chapter: str, settings: dict):
+        """Merge chosen chapter of userSettings.json with new settings"""
         _oldSettings = cls.getUserSettings()
         _newSettings = ObjectService.deepClone(_oldSettings)
 
@@ -163,6 +184,7 @@ class SettingsService:
 
     @classmethod
     def appendUserSettings(cls, chapter: str, obj: dict):
+        """Append new settings to chosen chapter of userSettings.json"""
         cls.updateUserSettings()
 
         if chapter not in cls.settings or not isinstance(cls.settings[chapter], dict):
@@ -234,11 +256,8 @@ class SoundService:
 
     sounds = {}
 
-    music_volume = 1.0
-    sfx_volume = 1.0
-
     @classmethod
-    def init(cls):
+    def __init__(cls):
         if cls._initialized:
             return
 
@@ -247,16 +266,14 @@ class SoundService:
 
     @classmethod
     def loadSound(cls, name: str, path: str):
-        cls.init()
-
+        """Load sound to cls.sounds as name from path"""
         sound = pygame.mixer.Sound(path)
-        sound.set_volume(cls.sfx_volume)
         cls.sounds[name] = sound
+        return sound
 
     @classmethod
     def loadFolder(cls, path: str):
-        cls.init()
-
+        """Load sounds to cls.sounds from folder on path"""
         for root, _, files in os.walk(path):
             for file in files:
                 if file.lower().endswith(cls._supported):
@@ -268,13 +285,26 @@ class SoundService:
 
                     cls.loadSound(name, full_path)
 
+        return cls.sounds
+
     @classmethod
-    def playSound(cls, name: str):
-        if name in cls.sounds:
-            cls.sounds[name].play()
+    def playSound(cls, name: str, parent=None):
+        """Play sound from cls.sounds with name
+        Parent changes volume using SettingsService"""
+        if not name in cls.sounds: return
+
+        sound = cls.sounds[name]
+
+        settings = SettingsService.getUserSettings()
+        volume = settings["General"]["volume"]
+
+        if parent: volume = settings["General"]["volume"] * settings["Windows"].get(parent, {"volume": 1.0})["volume"]
+        sound.set_volume(volume)
+        sound.play()
 
     @classmethod
     def stopSound(cls, name: str):
+        """Stop sounds with name from cls.sounds"""
         if name in cls.sounds:
             cls.sounds[name].stop()
 
@@ -287,8 +317,6 @@ class SoundService:
 
     @classmethod
     def playMusic(cls, path: str, loop=True):
-        cls.init()
-
         pygame.mixer.music.load(path)
         pygame.mixer.music.set_volume(cls.music_volume)
         pygame.mixer.music.play(-1 if loop else 0)
@@ -307,8 +335,11 @@ class SoundService:
         pygame.mixer.music.set_volume(volume)
 
     @classmethod
-    def setSoundsVolume(cls, volume: float):
-        cls.sfx_volume = volume
+    def setSoundVolume(cls, sound: str, volume: float):
+        if cls.sounds.get(sound) == None: return
+        cls.sounds[sound].set_volume(volume)
 
+    @classmethod
+    def setSoundsVolume(cls, volume: float):
         for sound in cls.sounds.values():
             sound.set_volume(volume)

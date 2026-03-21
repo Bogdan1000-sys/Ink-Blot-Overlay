@@ -19,7 +19,10 @@
         "GeneralSettings": {
             "opacity": 1.0,
             "volume": 1.0,
-            "position": false
+            "position": [
+                136,
+                213
+            ]
         },
         "Homepage": {
             "opacity": 1.0,

@@ -13,10 +13,11 @@ from Services import (
     ObjectService
 )
 
-SoundService.loadFolder("Resources/SFX")
 SettingsService.__init__()
 LocalizationService.__init__()
+SoundService.__init__()
 
+SoundService.loadFolder("Resources/SFX")
 
 # -- Widgets --
 from Widgets import Widgets
@@ -318,7 +319,7 @@ class WidgetsMenuWindow(InteractableWindow):
         '''
 
         if useSound:
-            SoundService.playSound("ClickSound")
+            SoundService.playSound("ClickSound", self.objectName())
 
         for button in widgetButtons:
             button.setStyleSheet(WidgetButtonStyle)
@@ -1206,7 +1207,7 @@ class WelcomeWindow(EmptyWindow):
                     widgetsMenuWindow = WidgetsMenuWindow(titleKey="titles/widgetsMenu", name="WidgetsMenu")
 
                 def optionBasic():
-                    SoundService.playSound("ClickSound")
+                    SoundService.playSound("ClickSound", self.objectName())
 
                 self.debounses["createNewOptionsDebounse"] = False
                 def createNewLayerOptions(
