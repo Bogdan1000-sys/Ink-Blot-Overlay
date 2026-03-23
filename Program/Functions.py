@@ -5,7 +5,9 @@ from copy import deepcopy
 import argparse
 
 # -- Services --
+from Services import InitializationService
 from Services import CollectionService
+InitializationService.__init__()
 
 # -- Data --
 with open("Data/Dictionary.json", "r", encoding="utf-8") as dFile:

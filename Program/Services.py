@@ -144,7 +144,27 @@ class SettingsService:
     
     @classmethod
     def __init__(cls):
-        cls.updateUserSettings()
+        if os.path.isfile(cls.__path):
+            cls.settings = cls.getUserSettings()
+        else:
+            cls.settings = cls.initializeUserSettings()
+
+    @classmethod
+    def initializeUserSettings(cls):
+        with open("Data/Settings/GeneralSettingsTemplate.json", "r", encoding="utf-8") as gtFile:
+            generalTemplate = json.load(gtFile)
+        with open("Data/Settings/WindowSettingsTemplate.json", "r", encoding="utf-8") as wtFile:
+            windowsTemplate = json.load(wtFile)
+
+        initializedUserSettings = {
+            "General": generalTemplate,
+            "Windows": windowsTemplate
+        }
+
+        with open(cls.__path, "w", encoding="utf-8") as userFile:
+            json.dump(initializedUserSettings, userFile, indent=4, ensure_ascii=False)
+
+        return initializedUserSettings
 
     @classmethod
     def updateUserSettings(cls):
@@ -343,3 +363,18 @@ class SoundService:
     def setSoundsVolume(cls, volume: float):
         for sound in cls.sounds.values():
             sound.set_volume(volume)
+
+
+class InitializationService:
+    OrderedServices = [
+        SettingsService,
+        LocalizationService,
+        SoundService,
+        CollectionService,
+        ObjectService
+    ]
+
+    @classmethod
+    def __init__(cls):
+        for Service in cls.OrderedServices:
+            Service()

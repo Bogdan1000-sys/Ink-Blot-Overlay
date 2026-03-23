@@ -4,6 +4,7 @@ from PyQt6.QtGui import QPainter, QColor, QBrush, QPainterPath, QPixmap, QPen, Q
 import subprocess, multiprocessing, keyboard, json, math, threading, os
 
 # -- Services --
+from Services import InitializationService
 from Services import (
     CollectionService, 
     SoundService,
@@ -11,10 +12,7 @@ from Services import (
     LocalizationService,
     ObjectService
 )
-
-SettingsService.__init__()
-LocalizationService.__init__()
-SoundService.__init__()
+InitializationService.__init__()
 
 SoundService.loadFolder("Resources/SFX")
 

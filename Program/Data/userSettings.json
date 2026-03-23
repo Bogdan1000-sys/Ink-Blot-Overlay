@@ -39,7 +39,10 @@
         "Clock": {
             "opacity": 1.0,
             "volume": 1.0,
-            "position": false
+            "position": [
+                17,
+                137
+            ]
         },
         "ConcentrationMode": {
             "opacity": 1.0,

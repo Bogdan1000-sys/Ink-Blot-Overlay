@@ -4,6 +4,7 @@ from PyQt6.QtGui import QWheelEvent, QPixmap, QMovie
 import sys, math, json, random
 
 # -- Services --
+from Services import InitializationService
 from Services import (
     CollectionService, 
     ConnectionListener, 
@@ -12,10 +13,7 @@ from Services import (
     LocalizationService,
     ObjectService
 )
-
-SettingsService.__init__()
-LocalizationService.__init__()
-SoundService.__init__()
+InitializationService.__init__()
 
 SoundService.loadFolder("Resources/SFX")
 
