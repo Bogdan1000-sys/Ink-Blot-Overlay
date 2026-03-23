@@ -17,7 +17,7 @@ InitializationService.__init__()
 SoundService.loadFolder("Resources/SFX")
 
 # -- Functions --
-from Functions import GetQTime, applyStyleClass
+from Functions import GetQTime, applyStyleClass, min, max
 
 # -- Variables --
 
@@ -1086,7 +1086,8 @@ class MinimizeButton(QPushButton):
         self.alignBehaviorY = None
 
         CollectionService.addTag(self, "exitOpacityWindow")
-        self.resize(size[0], size[1])
+        # self.resize(size[0], size[1])
+        self.Minimize()
         self.setProperty("class", "minimizeWindowButton")
         self.setStyleSheet("""
             QPushButton[class='minimizeWindowButton'] {
@@ -1135,6 +1136,17 @@ class MinimizeButton(QPushButton):
 
         self._dragging = False
         self._drag_offset = QPoint()
+    
+    def Minimize(self):
+        self.resize(
+            25,
+            max([self.parent().height()//5, 120])
+        )
+    def Maximize(self):
+        self.resize(
+            25,
+            self.parent().height()
+        )
     
     def closeEvent(self, event):
         event.ignore()
@@ -1303,7 +1315,8 @@ class InteractableWindow(QMainWindow):
         ''')
         self.iconsLayout.addWidget(self.uis["mainTitle"])
 
-        self.minimizeButton = MinimizeButton("↓", parent=self, size=[25,Constants["Size"]["height"]//5], wIcon=self._data["name"])
+        # self.minimizeButton = MinimizeButton("↓", parent=self, size=[25,Constants["Size"]["height"]//5], wIcon=self._data["name"])
+        self.minimizeButton = MinimizeButton("↓", parent=self, wIcon=self.objectName())
         self.minimizeButton.clicked.connect(self.sideMinimized)
         self.minimizeButton.show()
 
@@ -1514,7 +1527,8 @@ class InteractableWindow(QMainWindow):
 
         if not self._data["hidden"]:
             self.minimizeButton.setText("↑")
-
+            # self.minimizeButton.Minimize()
+            
             self.minimizeButton.DragFrame.move(
                 self.minimizeButton.x() + self.minimizeButton.width() + 1,
                 self.minimizeButton.y() + self.minimizeButton.height() // 2 - self.minimizeButton.DragFrame.height() // 2
@@ -1526,6 +1540,7 @@ class InteractableWindow(QMainWindow):
             QTimer.singleShot(GetQTime(0.1), self.Hide)
         else:
             self.minimizeButton.setText("↓")
+            # self.minimizeButton.Maximize()
 
             self.minimizeButton.DragFrame.hide()
             self.move(

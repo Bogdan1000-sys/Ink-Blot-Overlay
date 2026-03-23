@@ -70,7 +70,9 @@
 			"select": "Select",
 			"unselect": "Unselect",
 			"activateSel": "Activate Selected",
-			"deactivateAll": "Deactivate All"
+			"deactivateAll": "Deactivate All",
+			"apply": "Apply",
+			"cancel": "Cancel"
 		}
 	},
 	"rus": {
@@ -144,7 +146,9 @@
 			"select": "Выбрать",
 			"unselect": "Убрать",
 			"activateSel": "Запустить Выбранное",
-			"deactivateAll": "Отключить Всё"
+			"deactivateAll": "Отключить Всё",
+			"apply": "Применить",
+			"cancel": "Отменить"
 		}
 	},
 	"kg": {
@@ -218,7 +222,9 @@
 			"select": "Тандоо",
 			"unselect": "Алуу",
 			"activateSel": "Танд. иштет.",
-			"deactivateAll": "Баарын өчүрүү"
+			"deactivateAll": "Баарын өчүрүү",
+			"apply": "Колдон",
+			"cancel": "Жокко"
 		}
 	}
 }

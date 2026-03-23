@@ -32,6 +32,21 @@ def applyStyleClass(obj, className):
 def setClassVariable(classSelf, valueName:str, value):
     classSelf[valueName] = value
 
+# ---------- Math ---------- #
+def min(array):
+    minimum = array[0]
+    for x in array:
+        if x < minimum:
+            minimum = x
+    return minimum
+
+def max(array):
+    maximum = array[0]
+    for x in array:
+        if x > maximum:
+            maximum = x
+    return maximum
+
 # ---------- Animations ------------- #
 def CloneAnimation(animation: QPropertyAnimation, parent=None):
     newAnimation = QPropertyAnimation(parent or animation.parent(), animation.propertyName())
