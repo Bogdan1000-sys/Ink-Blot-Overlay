@@ -1195,6 +1195,7 @@ class InteractableWindow(QMainWindow):
 
         headerLayout = QHBoxLayout()
         headerLayout.setSpacing(5)
+        headerLayout.setContentsMargins(3,0,3,0)
         headerLayout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
         self.mainLayout.addLayout(headerLayout)
 
