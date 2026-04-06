@@ -150,6 +150,11 @@ class SettingsService:
             cls.settings = cls.initializeUserSettings()
 
     @classmethod
+    def getSettingsTree(cls):
+        with open("Data/Settings/GeneralSettingsTree.json", "r", encoding="utf-8") as treeFile:
+            return json.load(treeFile)
+
+    @classmethod
     def initializeUserSettings(cls):
         with open("Data/Settings/GeneralSettingsTemplate.json", "r", encoding="utf-8") as gtFile:
             generalTemplate = json.load(gtFile)

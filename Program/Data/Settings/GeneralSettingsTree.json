@@ -1,0 +1,57 @@
+{
+	"Accessibility": {
+		"name": "generalSettings/Accessibility",
+		"branches": {
+			"language": {
+				"name": "generalSettings/language/name",
+				"description": "generalSettings/language/description",
+				"type": "dropdown",
+				"options": ["eng", "rus", "kg"]
+			}
+		}
+	},
+	"Sound": {
+		"name": "generalSettings/Sound",
+		"branches": {
+			"masterVolume": {
+				"name": "generalSettings/masterVolume/name",
+				"description": "generalSettings/masterVolume/description",
+				"type": "slider",
+				"options": { "min": 0.0, "max": 1.0 }
+			},
+			"soundVolume": {
+				"name": "generalSettings/soundVolume/name",
+				"description": "generalSettings/soundVolume/description",
+				"type": "slider",
+				"options": { "min": 0.0, "max": 1.0 }
+			},
+			"musicVolume": {
+				"name": "generalSettings/musicVolume/name",
+				"description": "generalSettings/musicVolume/description",
+				"type": "slider",
+				"options": { "min": 0.0, "max": 1.0 }
+			},
+			"notificationsVolume": {
+				"name": "generalSettings/notificationsVolume/name",
+				"description": "generalSettings/notificationsVolume/description",
+				"type": "slider",
+				"options": { "min": 0.0, "max": 1.0 }
+			}
+		}
+	},
+	"Other": {
+		"name": "generalSettings/Other",
+		"branches": {
+			"resetToDefault": {
+				"name": "generalSettings/resetToDefault/name",
+				"description": "generalSettings/resetToDefault/description",
+				"type": "dialogButton",
+				"options": {
+					"question": "generalSettings/resetToDefault/question",
+					"yes": "generalSettings/resetToDefault/yes",
+					"no": "generalSettings/resetToDefault/no"
+				}
+			}
+		}
+	}
+}

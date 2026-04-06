@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QFrame, QWidget, QScrollArea, QSizePolicy, QPushButton, QBoxLayout, QGraphicsOpacityEffect
 from PyQt6.QtCore import Qt, QEasingCurve, QPropertyAnimation, QPoint, QTimer
-from PyQt6.QtGui import QWheelEvent, QPixmap, QMovie
+from PyQt6.QtGui import QWheelEvent, QPixmap
 import sys, math, json, random
 
 # -- Services --
