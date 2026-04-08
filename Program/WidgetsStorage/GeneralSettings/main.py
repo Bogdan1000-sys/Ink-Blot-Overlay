@@ -101,12 +101,27 @@ OptionsStyle = """
         background: #100700;
         border-radius: 20px;
     }
+
+    QLabel[class='optionName'] {
+        background: transparent;
+        font-size: 17px;
+        font-family: 'Courier New', Courier, monospace;
+        color: rgba(255, 106, 0, 255);
+        padding-left: 5px;
+    }
+
+    QFrame[class='interContainer'] {
+        background: transparent;
+        border: none;
+    }
 """
 
 def main(connection):
     global generalSettingsWindow
 
     uiApp = UIApplication(sys.argv, appName="GeneralSettingsApplication")
+    tree = SettingsService.getSettingsTree()
+    chapter = list(tree.keys())[1]
 
     class OptionContainer(QFrame):
         def __init__(self, parent=None, key=None):
@@ -116,6 +131,29 @@ def main(connection):
             self.setProperty("class", "optionContainer")
             self.setStyleSheet(OptionsStyle)
             self.show()
+
+            self.lay = QHBoxLayout()
+            self.lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.lay.setContentsMargins(0, 0, 0, 0)
+            self.lay.setSpacing(0)
+            self.lay.setDirection(QBoxLayout.Direction.LeftToRight)
+            self.setLayout(self.lay)
+
+            optionData = tree[chapter].get("branches", {})[key]
+
+            self.nameLabel = QLabel("[ Opt. Name ]", parent=self)
+            self.nameLabel.setProperty("class", "optionName")
+            self.nameLabel.setFixedSize(self.width()//2, self.height())
+            self.nameLabel.setAlignment(Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft)
+            self.lay.addWidget(self.nameLabel)
+
+            self.interContainer = QFrame(parent=self)
+            self.interContainer.setProperty("class", "interContainer")
+            self.interContainer.setFixedSize(self.width()//2, self.height())
+            self.lay.addWidget(self.interContainer)
+
+            # LocalizationService.registerAdaptableText(self.nameLabel, optionData["name"])
+
 
     class GeneralSettingsWindow(ModifiedWindow):
 
@@ -136,16 +174,13 @@ def main(connection):
 
             LocalizationService.registerAdaptableText(self.uis["holdAlt"], "labels/ALT")
 
-            self.__tree: dict = SettingsService.getSettingsTree()
-            self.__chapter = list(self.__tree.keys())[1]
-
             self.show()
             self.stylizeWindow()
 
             self.updateOptionsLayout()
 
         def updateOptionsLayout(self):
-            data = self.__tree[self.__chapter].get("branches")
+            data = tree[chapter].get("branches")
             if data == None: print("[ GENERAL SETTINGS ] No 'branches' found!"); return
             for key in data.keys():
                 optContainer = OptionContainer(parent=self, key=key)
