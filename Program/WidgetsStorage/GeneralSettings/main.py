@@ -1,4 +1,4 @@
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtCore import Qt, QTimer, QPropertyAnimation, QEasingCurve, QMargins, QParallelAnimationGroup
 from PyQt6.QtWidgets import QFrame, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QSizePolicy, QBoxLayout, QGraphicsOpacityEffect
 from PyQt6.QtGui import QPixmap
 import sys, json, random, os, math
@@ -134,6 +134,9 @@ def main(connection):
         def __init__(self, parent=None, key=None):
             super().__init__(parent)
 
+            self._margins = QMargins(0, 0, 0, 0)
+            self.setContentsMargins(self._margins)
+
             self.setFixedSize(self.parent().width() - 40, 40)
             self.setProperty("class", "optionContainer")
             self.setStyleSheet(OptionsStyle)
@@ -158,6 +161,20 @@ def main(connection):
             self.interContainer.setProperty("class", "interContainer")
             self.interContainer.setFixedSize(self.width()//2, self.height())
             self.lay.addWidget(self.interContainer)
+
+            self.opacity = QGraphicsOpacityEffect()
+            self.opacity.setOpacity(0.0)
+            self.setGraphicsEffect(self.opacity)
+
+            opacityAnim = QPropertyAnimation(self.opacity, b"opacity")
+            opacityAnim.setStartValue(0.0)
+            opacityAnim.setEndValue(1)
+            opacityAnim.setDuration(GetQTime(0.5))
+            opacityAnim.setEasingCurve(QEasingCurve.Type.InOutSine)
+            opacityAnim.setLoopCount(1)
+
+            self.showAnim = QParallelAnimationGroup()
+            self.showAnim.addAnimation(opacityAnim)
 
             LocalizationService.registerAdaptableText(self.nameLabel, optionData["name"])
 
@@ -201,6 +218,12 @@ def main(connection):
                 optContainer = OptionContainer(parent=self, key=key)
                 self.elements["OptionsContainer"].lay.addWidget(optContainer)
                 self.Options[key] = optContainer
+
+            for i, optContainer in enumerate(self.Options.values()):
+                QTimer.singleShot(
+                    GetQTime(float(i)*0.05),
+                    lambda opt=optContainer: opt.showAnim.start()
+                )
 
         switchDebounce = False
         def switchChapter(self, direction=">"):
