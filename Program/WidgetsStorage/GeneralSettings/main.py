@@ -1,4 +1,4 @@
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import QFrame, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QSizePolicy, QBoxLayout, QGraphicsOpacityEffect
 from PyQt6.QtGui import QPixmap
 import sys, json, random, os, math
@@ -19,7 +19,7 @@ InitializationService.__init__()
 SoundService.loadFolder("Resources/SFX")
 
 # -- Functions --
-
+from Functions import GetQTime
 
 # -- Objects --
 generalSettingsWindow = None
@@ -31,8 +31,12 @@ with open("Data/Pathes.json", "r", encoding="utf-8") as pFile:
 # -- Data --
 with open(Pathes["Constants"], "r", encoding="utf-8") as cFile:
     Constants = json.load(cFile)
-with open(Pathes["Data"], "r", encoding="utf-8") as dataFile:
-    Data = json.load(dataFile)
+
+# -- Settings Data --
+with open(Pathes["GeneralSettingsTree"], "r", encoding="utf-8") as treeFile:
+    Tree = json.load(treeFile)
+with open(Pathes["GeneralSettingsCarousel"], "r", encoding="utf-8") as carouselFile:
+    Carousel = json.load(carouselFile)
 
 # -- Scripts --
 from Classes import ModifiedWindow, UIApplication
@@ -104,7 +108,7 @@ OptionsStyle = """
 
     QLabel[class='optionName'] {
         background: transparent;
-        font-size: 17px;
+        font-size: 14px;
         font-family: 'Courier New', Courier, monospace;
         color: rgba(255, 106, 0, 255);
         padding-left: 5px;
@@ -122,6 +126,9 @@ def main(connection):
     uiApp = UIApplication(sys.argv, appName="GeneralSettingsApplication")
     tree = SettingsService.getSettingsTree()
     chapter = list(tree.keys())[1]
+    index = list(tree.keys()).index(chapter)
+
+    print("Chapter:", chapter, "Index:", index)
 
     class OptionContainer(QFrame):
         def __init__(self, parent=None, key=None):
@@ -152,7 +159,7 @@ def main(connection):
             self.interContainer.setFixedSize(self.width()//2, self.height())
             self.lay.addWidget(self.interContainer)
 
-            # LocalizationService.registerAdaptableText(self.nameLabel, optionData["name"])
+            LocalizationService.registerAdaptableText(self.nameLabel, optionData["name"])
 
 
     class GeneralSettingsWindow(ModifiedWindow):
@@ -179,12 +186,45 @@ def main(connection):
 
             self.updateOptionsLayout()
 
+        Options = {}
+
         def updateOptionsLayout(self):
+            LocalizationService.registerAdaptableText(self.elements["NavigationLabel"].label, "generalSettings/"+chapter)
+
+            for key in self.Options.keys():
+                self.Options[key].deleteLater()
+            self.Options.clear()
+
             data = tree[chapter].get("branches")
             if data == None: print("[ GENERAL SETTINGS ] No 'branches' found!"); return
             for key in data.keys():
                 optContainer = OptionContainer(parent=self, key=key)
                 self.elements["OptionsContainer"].lay.addWidget(optContainer)
+                self.Options[key] = optContainer
+
+        switchDebounce = False
+        def switchChapter(self, direction=">"):
+            if self.switchDebounce: return
+            self.switchDebounce = True
+            def changeDeb(): self.switchDebounce = False
+            QTimer.singleShot(GetQTime(0.5), changeDeb)
+
+            nonlocal index, chapter
+            global Carousel
+
+            if direction == ">": 
+                index += 1
+                if index > len(Carousel)-1: index = 0
+            else: # "<"
+                index -= 1
+                if index < 0: index = len(Carousel)-1
+            
+            chapter = Carousel[index]
+
+            # print(f"Switched {direction}. Index:", index)
+            # print("Switched to Chapter:", chapter)
+
+            self.updateOptionsLayout()
 
         def stylizeWindow(self):
             self.mainLayout.setContentsMargins(0, 2, 0, 0)
@@ -366,11 +406,13 @@ def main(connection):
                 
                 return button
 
-            self.elements["PreviousSwitchButton"] = CreateSwitchButton("<")
-            self.elements["SwitchesContainer"].lay.addWidget(self.elements["PreviousSwitchButton"])
+            self.elements["LeftSwitchButton"] = CreateSwitchButton("<")
+            self.elements["SwitchesContainer"].lay.addWidget(self.elements["LeftSwitchButton"])
+            self.elements["LeftSwitchButton"].clicked.connect(lambda: self.switchChapter("<"))
 
-            self.elements["NextSwitchButton"] = CreateSwitchButton(">")
-            self.elements["SwitchesContainer"].lay.addWidget(self.elements["NextSwitchButton"])
+            self.elements["RightSwitchButton"] = CreateSwitchButton(">")
+            self.elements["SwitchesContainer"].lay.addWidget(self.elements["RightSwitchButton"])
+            self.elements["RightSwitchButton"].clicked.connect(lambda: self.switchChapter(">"))
 
             # OPTIONS LIST ---------------------------------------------------------------------------------------------
 

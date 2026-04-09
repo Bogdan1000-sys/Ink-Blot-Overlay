@@ -2,8 +2,10 @@
     "Constants": "Data/Constants.json",
     "Data": "Data/Data.json",
     "Dictionary": "Data/Dictionary.json",
+    
+    "GeneralSettingsCarousel": "Data/Settings/GeneralSettingsCarousel.json",
+    "GeneralSettingsTemplate": "Data/Settings/GeneralSettingsTemplate.json",
+    "GeneralSettingsTree": "Data/Settings/GeneralSettingsTree.json",
     "SettingOptions": "Data/Settings/SettingOptions.json",
-    "WindowSettingsTemplate": "Data/Settings/WindowSettingsTemplate.json",
-
-    "userSettings": "Data/userSettings.json"
+    "WindowSettingsTemplate": "Data/Settings/WindowSettingsTemplate.json"
 }
