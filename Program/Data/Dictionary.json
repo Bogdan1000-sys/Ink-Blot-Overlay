@@ -73,6 +73,40 @@
 			"deactivateAll": "Deactivate All",
 			"apply": "Apply",
 			"cancel": "Cancel"
+		},
+		"generalSettings": {
+			"Accessibility": "Accessibility",
+			"language": {
+				"name": "Language",
+				"description": "Change language of the app."
+			},
+
+			"Sound": "Sound",
+			"masterVolume": {
+				"name": "Master Volume",
+				"description": "Changes master volume of the app."
+			},
+			"soundVolume": {
+				"name": "SFX Volume",
+				"description": "Changes SFX volume of the app."
+			},
+			"musicVolume": {
+				"name": "Music Volume",
+				"description": "Changes music volume of the app."
+			},
+			"notificationsVolume": {
+				"name": "Notifications Volume",
+				"description": "Changes notification volume of the app."
+			},
+
+			"Other": "Other",
+			"resetToDefault": {
+				"name": "Reset to Default.",
+				"description": "Reset all settings to defaults.",
+				"question": "Do you want to reset all settings to default?",
+				"yes": "Yes",
+				"no": "No"
+			}
 		}
 	},
 	"rus": {
@@ -149,6 +183,40 @@
 			"deactivateAll": "Отключить Всё",
 			"apply": "Применить",
 			"cancel": "Отменить"
+		},
+		"generalSettings": {
+			"Accessibility": "Доступность",
+			"language": {
+				"name": "Язык",
+				"description": "Изменить язык приложения."
+			},
+
+			"Sound": "Звук",
+			"masterVolume": {
+				"name": "Общая громкость",
+				"description": "Изменяет общую громкость приложения."
+			},
+			"soundVolume": {
+				"name": "Громкость эффектов",
+				"description": "Изменяет громкость звуковых эффектов."
+			},
+			"musicVolume": {
+				"name": "Громкость музыки",
+				"description": "Изменяет громкость музыки."
+			},
+			"notificationsVolume": {
+				"name": "Громкость уведомлений",
+				"description": "Изменяет громкость уведомлений."
+			},
+
+			"Other": "Другое",
+			"resetToDefault": {
+				"name": "Сбросить настройки",
+				"description": "Сбросить все настройки к значениям по умолчанию.",
+				"question": "Вы хотите сбросить все настройки по умолчанию?",
+				"yes": "Да",
+				"no": "Нет"
+			}
 		}
 	},
 	"kg": {
@@ -225,6 +293,40 @@
 			"deactivateAll": "Баарын өчүрүү",
 			"apply": "Колдон",
 			"cancel": "Жокко"
+		},
+		"generalSettings": {
+			"Accessibility": "Жеткиликтүүлүк",
+			"language": {
+				"name": "Тил",
+				"description": "Колдонмонун тилин өзгөртүү."
+			},
+
+			"Sound": "Үн",
+			"masterVolume": {
+				"name": "Жалпы үн деңгээли",
+				"description": "Колдонмонун жалпы үн деңгээлин өзгөртөт."
+			},
+			"soundVolume": {
+				"name": "Эффекттердин үнү",
+				"description": "Үн эффекттеринин деңгээлин өзгөртөт."
+			},
+			"musicVolume": {
+				"name": "Музыканын үнү",
+				"description": "Музыканын үн деңгээлин өзгөртөт."
+			},
+			"notificationsVolume": {
+				"name": "Билдирмелердин үнү",
+				"description": "Билдирмелердин үн деңгээлин өзгөртөт."
+			},
+
+			"Other": "Башка",
+			"resetToDefault": {
+				"name": "Баштапкы абалга кайтаруу",
+				"description": "Бардык жөндөөлөрдү баштапкы абалга кайтаруу.",
+				"question": "Бардык жөндөөлөрдү баштапкы абалга кайтарууну каалайсызбы?",
+				"yes": "Ооба",
+				"no": "Жок"
+			}
 		}
 	}
 }
