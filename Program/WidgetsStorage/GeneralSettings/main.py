@@ -125,7 +125,7 @@ def main(connection):
 
     uiApp = UIApplication(sys.argv, appName="GeneralSettingsApplication")
     tree = SettingsService.getSettingsTree()
-    chapter = list(tree.keys())[1]
+    chapter = list(tree.keys())[0]
     index = list(tree.keys()).index(chapter)
 
     print("Chapter:", chapter, "Index:", index)
@@ -225,12 +225,16 @@ def main(connection):
                     lambda opt=optContainer: opt.showAnim.start()
                 )
 
+            for point in self.elements["navigationPoints"]:
+                if self.elements["navigationPoints"].index(point) == index: point.select()
+                else: point.unselect()
+
         switchDebounce = False
         def switchChapter(self, direction=">"):
             if self.switchDebounce: return
             self.switchDebounce = True
             def changeDeb(): self.switchDebounce = False
-            QTimer.singleShot(GetQTime(0.5), changeDeb)
+            QTimer.singleShot(GetQTime(0.25), changeDeb)
 
             nonlocal index, chapter
             global Carousel
@@ -243,10 +247,7 @@ def main(connection):
                 if index < 0: index = len(Carousel)-1
             
             chapter = Carousel[index]
-
-            # print(f"Switched {direction}. Index:", index)
-            # print("Switched to Chapter:", chapter)
-
+            
             self.updateOptionsLayout()
 
         def stylizeWindow(self):
@@ -373,22 +374,24 @@ def main(connection):
                 label.show()
                 parent.lay.addWidget(label)
 
-                def select():
-                    nonlocal pixmap
-                    opacity.setOpacity(1.0)
+                showOpacity = QPropertyAnimation(opacity, b"opacity")
+                showOpacity.setEndValue(1.0)
+                showOpacity.setDuration(GetQTime(0.25))
 
-                def unselect():
-                    nonlocal label
-                    opacity.setOpacity(0.25)
+                hideOpacity = QPropertyAnimation(opacity, b"opacity")
+                hideOpacity.setEndValue(0.25)
+                hideOpacity.setDuration(GetQTime(0.25))
 
-
-                label.select = select
-                label.unselect = unselect
+                label.select = showOpacity.start
+                label.unselect = hideOpacity.start
                 
                 return label
             
+            self.elements["navigationPoints"] = []
+            
             for i in range(3):
                 point = CreatePoint()
+                self.elements["navigationPoints"].append(point)
                 if i == 0: point.select()
                 else: point.unselect()
 
