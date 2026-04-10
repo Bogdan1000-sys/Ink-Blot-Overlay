@@ -321,9 +321,9 @@ class SoundService:
         sound = cls.sounds[name]
 
         settings = SettingsService.getUserSettings()
-        volume = settings["General"]["volume"]
+        volume = settings["General"]["masterVolume"] * settings["General"]["soundVolume"]
 
-        if parent: volume = settings["General"]["volume"] * settings["Windows"].get(parent, {"volume": 1.0})["volume"]
+        if parent: volume *= settings["Windows"].get(parent, {"volume": 1.0})["volume"]
         sound.set_volume(volume)
         sound.play()
 
@@ -342,8 +342,11 @@ class SoundService:
 
     @classmethod
     def playMusic(cls, path: str, loop=True):
+        settings = SettingsService.getUserSettings()
+        volume = settings["General"]["masterVolume"] * settings["General"]["musicVolume"]
+
         pygame.mixer.music.load(path)
-        pygame.mixer.music.set_volume(cls.music_volume)
+        pygame.mixer.music.set_volume(volume)
         pygame.mixer.music.play(-1 if loop else 0)
 
     @classmethod
@@ -353,21 +356,6 @@ class SoundService:
     @classmethod
     def isMusicPlaying(cls) -> bool:
         return pygame.mixer.music.get_busy()
-
-    @classmethod
-    def setMusicVolume(cls, volume: float):
-        cls.music_volume = volume
-        pygame.mixer.music.set_volume(volume)
-
-    @classmethod
-    def setSoundVolume(cls, sound: str, volume: float):
-        if cls.sounds.get(sound) == None: return
-        cls.sounds[sound].set_volume(volume)
-
-    @classmethod
-    def setSoundsVolume(cls, volume: float):
-        for sound in cls.sounds.values():
-            sound.set_volume(volume)
 
 
 class InitializationService:

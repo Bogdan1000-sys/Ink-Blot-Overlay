@@ -201,6 +201,8 @@ def main(connection):
             self.show()
             self.stylizeWindow()
 
+            self.buttons["settingsButton"].setFixedWidth(120)
+
             self.updateOptionsLayout()
 
         Options = {}
@@ -247,8 +249,9 @@ def main(connection):
                 if index < 0: index = len(Carousel)-1
             
             chapter = Carousel[index]
-            
+
             self.updateOptionsLayout()
+            SoundService.playSound("ClickSound", self.objectName())
 
         def stylizeWindow(self):
             self.mainLayout.setContentsMargins(0, 2, 0, 0)
@@ -510,7 +513,7 @@ def main(connection):
             self.Hide(onFinished=uiApp.exit, Hard=True)
             return
 
-    generalSettingsWindow = GeneralSettingsWindow(titleKey="titles/generalSettings", name="GeneralSettings", Mode="blackList", Modifiers=["settings", "gsettings"])
+    generalSettingsWindow = GeneralSettingsWindow(titleKey="titles/generalSettings", name="GeneralSettings", Mode="blackList", Modifiers=["gsettings"])
 
     # CODE -----------------------------------------------------------------------------------------------
 
