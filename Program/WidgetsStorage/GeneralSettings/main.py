@@ -118,12 +118,49 @@ OptionsStyle = """
         background: transparent;
         border: none;
     }
+
+    QObject[class='interconElement'] {
+        min-width: 30px;
+        min-height: 30px;
+        
+        background: #371800;
+        border-radius: 15px;
+        border: none;
+    }
+
+    QPushButton#dropButton {
+        width: 120px;
+
+        border-radius: 15px;
+    }
+
+    QPushButton#dropButton:hover {
+        background: #000000;
+    }
+
+    QLabel#text {
+        background: transparent;
+        padding-bottom: 2px;
+        font-size: 22px;
+        font-family: 'Courier New', Courier, monospace;
+        color: rgba(255, 106, 0, 255);
+    }
+
+    QLabel#currentValueLabel {
+        min-width: 40px;
+
+        font-size: 14px;
+        font-family: 'Courier New', Courier, monospace;
+        color: rgba(255, 106, 0, 255);
+    }
 """
 
 def main(connection):
     global generalSettingsWindow
 
     uiApp = UIApplication(sys.argv, appName="GeneralSettingsApplication")
+
+    settings = SettingsService.getUserSettings().get("General", {})
     tree = SettingsService.getSettingsTree()
     chapter = list(tree.keys())[0]
     index = list(tree.keys()).index(chapter)
@@ -143,7 +180,7 @@ def main(connection):
             self.show()
 
             self.lay = QHBoxLayout()
-            self.lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.lay.setAlignment(Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignRight)
             self.lay.setContentsMargins(0, 0, 0, 0)
             self.lay.setSpacing(0)
             self.lay.setDirection(QBoxLayout.Direction.LeftToRight)
@@ -162,6 +199,13 @@ def main(connection):
             self.interContainer.setFixedSize(self.width()//2, self.height())
             self.lay.addWidget(self.interContainer)
 
+            self.interContainer.lay = QHBoxLayout()
+            self.interContainer.lay.setAlignment(Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignRight)
+            self.interContainer.lay.setContentsMargins(0, 0, 5, 0)
+            self.interContainer.lay.setSpacing(5)
+            self.interContainer.lay.setDirection(QBoxLayout.Direction.LeftToRight)
+            self.interContainer.setLayout(self.interContainer.lay)
+
             self.opacity = QGraphicsOpacityEffect()
             self.opacity.setOpacity(0.0)
             self.setGraphicsEffect(self.opacity)
@@ -177,6 +221,37 @@ def main(connection):
             self.showAnim.addAnimation(opacityAnim)
 
             LocalizationService.registerAdaptableText(self.nameLabel, optionData["name"])
+
+            if optionData["type"] == "dropdown":
+                dropButton = QPushButton(self)
+                dropButton.setObjectName("dropButton")
+                dropButton.setProperty("class", "interconElement")
+                
+                dropButton.lay = QHBoxLayout()
+                dropButton.lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                dropButton.lay.setContentsMargins(0, 0, 0, 0)
+                dropButton.lay.setSpacing(0)
+                dropButton.lay.setDirection(QBoxLayout.Direction.LeftToRight)
+                dropButton.setLayout(dropButton.lay)
+
+                dropButton.dropArrows = QLabel(text="↓↓↓↓↓↓",parent=dropButton)
+                dropButton.dropArrows.setObjectName("text")
+                dropButton.lay.addWidget(dropButton.dropArrows)
+
+                self.interContainer.lay.addWidget(dropButton)
+            elif optionData["type"] == "slider":
+                pass
+            elif optionData["type"] == "dialogButton":
+                pass
+            
+            if not settings.get(key): return
+
+            currentValueLabel = QLabel(text=str(settings[key]), parent=self.interContainer)
+            currentValueLabel.setObjectName("currentValueLabel")
+            currentValueLabel.setProperty("class", "interconElement")
+            currentValueLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.interContainer.lay.addWidget(currentValueLabel)
+
 
 
     class GeneralSettingsWindow(ModifiedWindow):
@@ -201,7 +276,7 @@ def main(connection):
             self.show()
             self.stylizeWindow()
 
-            self.buttons["settingsButton"].setFixedWidth(120)
+            self.buttons["settingsButton"].setFixedWidth(100)
 
             self.updateOptionsLayout()
 

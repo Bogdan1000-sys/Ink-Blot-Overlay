@@ -101,7 +101,7 @@
 
 			"Other": "Other",
 			"resetToDefault": {
-				"name": "Reset to Default.",
+				"name": "Reset to Default",
 				"description": "Reset all settings to defaults.",
 				"question": "Do you want to reset all settings to default?",
 				"yes": "Yes",

@@ -3,6 +3,7 @@
 		"name": "generalSettings/Accessibility",
 		"branches": {
 			"language": {
+				"key": "language",
 				"name": "generalSettings/language/name",
 				"description": "generalSettings/language/description",
 				"type": "dropdown",
@@ -14,24 +15,28 @@
 		"name": "generalSettings/Sound",
 		"branches": {
 			"masterVolume": {
+				"key": "masterVolume",
 				"name": "generalSettings/masterVolume/name",
 				"description": "generalSettings/masterVolume/description",
 				"type": "slider",
 				"options": { "min": 0.0, "max": 1.0 }
 			},
 			"soundVolume": {
+				"key": "soundVolume",
 				"name": "generalSettings/soundVolume/name",
 				"description": "generalSettings/soundVolume/description",
 				"type": "slider",
 				"options": { "min": 0.0, "max": 1.0 }
 			},
 			"musicVolume": {
+				"key": "musicVolume",
 				"name": "generalSettings/musicVolume/name",
 				"description": "generalSettings/musicVolume/description",
 				"type": "slider",
 				"options": { "min": 0.0, "max": 1.0 }
 			},
 			"notificationsVolume": {
+				"key": "notificationsVolume",
 				"name": "generalSettings/notificationsVolume/name",
 				"description": "generalSettings/notificationsVolume/description",
 				"type": "slider",
@@ -43,6 +48,7 @@
 		"name": "generalSettings/Other",
 		"branches": {
 			"resetToDefault": {
+				"key": "resetToDefault",
 				"name": "generalSettings/resetToDefault/name",
 				"description": "generalSettings/resetToDefault/description",
 				"type": "dialogButton",
