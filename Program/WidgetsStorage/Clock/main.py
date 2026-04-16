@@ -9,7 +9,8 @@ from Services import InitializationService
 from Services import (
     ConnectionListener,
     SettingsService,
-    SoundService
+    SoundService,
+    LocalizationService
 )
 InitializationService.__init__()
 
@@ -85,9 +86,11 @@ def main(connection):
 
         if isinstance(msg, str):
             if ":" not in msg: return
-            code, action = msg.split(":", 1)
-            if code == "code" and action in codeFunctions:
-                codeFunctions[action]()
+            prefix, affix = msg.split(":", 1)
+            if prefix == "code" and affix in codeFunctions:
+                codeFunctions[affix]()
+            elif prefix == "language":
+                LocalizationService.changeLanguage(affix, False)
 
     # -----------------------------------------------------------------------------------------------------
 

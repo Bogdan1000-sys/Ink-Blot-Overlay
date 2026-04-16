@@ -128,9 +128,11 @@ class WidgetsMenuWindow(InteractableWindow):
 
         if isinstance(msg, str):
             if ":" not in msg: return
-            code, action = msg.split(":", 1)
-            if code == "code" and action in self.codeFunctions:
-                self.codeFunctions[action]()
+            prefix, affix = msg.split(":", 1)
+            if prefix == "code" and affix in self.codeFunctions:
+                self.codeFunctions[affix]()
+            elif prefix == "language":
+                LocalizationService.changeLanguage(affix, False, uiApp)
 
 
     def UpdateListeners(self):

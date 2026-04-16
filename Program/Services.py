@@ -122,7 +122,7 @@ class LocalizationService:
             return "[Missing]"
         
     @classmethod
-    def changeLanguage(cls, newLanguage: str, updateSettings=True):
+    def changeLanguage(cls, newLanguage: str, updateSettings=True, app=None):
         """
         Change content in all localization adaptable QLabels
 
@@ -137,6 +137,9 @@ class LocalizationService:
         for widget in CollectionService.getTagged("adaptableTextWidget"):
             try: widget.setText(cls.getAdaptedTextFromDictionary(widget.property("textKey")))
             except: pass
+        if app:
+            for connection in app.mpConnections.values():
+                connection.send(f"language:{newLanguage}")
 
 class SettingsService:
     settings = None
@@ -219,7 +222,9 @@ class SettingsService:
             cls.settings[chapter][key] = value
 
         cls.__setJSON(cls.settings)
-    
+
+        LocalizationService.changeLanguage(cls.settings["General"]["language"], False)
+
 class ObjectService:
     @classmethod
     def deepUpdate(cls, old: dict, new: dict) -> bool:

@@ -1,4 +1,4 @@
-from PyQt6.QtCore import Qt, QTimer, QPropertyAnimation, QEasingCurve, QMargins, QParallelAnimationGroup
+from PyQt6.QtCore import Qt, QTimer, QPropertyAnimation, QEasingCurve, QMargins, QParallelAnimationGroup, QPoint
 from PyQt6.QtWidgets import QFrame, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QSizePolicy, QBoxLayout, QGraphicsOpacityEffect
 from PyQt6.QtGui import QPixmap
 import sys, json, random, os, math
@@ -153,6 +153,27 @@ OptionsStyle = """
         font-family: 'Courier New', Courier, monospace;
         color: rgba(255, 106, 0, 255);
     }
+
+    QFrame#dropContainer {
+        background: #371800;
+        border-radius: 15px;
+        border: none;
+    }
+
+    QPushButton#optionButton {
+        background: #733200;
+        border-radius: 5px;
+        border: none;
+
+        font-size: 14px;
+        font-family: 'Courier New', Courier, monospace;
+        color: rgba(255, 106, 0, 255);
+    }
+
+    QPushButton#optionButton:hover {
+        background: #522402;
+        color: rgba(153, 64, 0, 255);
+    }
 """
 
 def main(connection):
@@ -237,6 +258,73 @@ def main(connection):
                 dropButton.dropArrows = QLabel(text="↓↓↓↓↓↓",parent=dropButton)
                 dropButton.dropArrows.setObjectName("text")
                 dropButton.lay.addWidget(dropButton.dropArrows)
+
+                def createDropContainer():
+                    dropContainer = QFrame(self)
+                    dropContainer.setObjectName("dropContainer")
+                    dropContainer.setProperty("class", "interconElement")
+
+                    dropContainer.setFixedSize(
+                        dropButton.width(),
+                        dropButton.height() * len(optionData["options"]) + 20
+                    )
+
+                    targetPos = dropButton.mapToGlobal(QPoint(0, dropButton.height() + 2))
+                    dropContainer.move(targetPos)
+
+                    dropContainer.opacity = QGraphicsOpacityEffect()
+                    dropContainer.opacity.setOpacity(0.0)
+
+                    dropContainer.showAnims = QParallelAnimationGroup()
+
+                    showOpacity = QPropertyAnimation(dropContainer.opacity, b"opacity")
+                    showOpacity.setStartValue(0.0)
+                    showOpacity.setEndValue(1.0)
+                    showOpacity.setDuration(GetQTime(0.15))
+                    showOpacity.setEasingCurve(QEasingCurve.Type.InOutCubic)
+                    showOpacity.setLoopCount(1)
+
+                    showPos = QPropertyAnimation(dropContainer, b"pos")
+                    showPos.setStartValue(targetPos + QPoint(0, -10))
+                    showPos.setEndValue(targetPos)
+                    showPos.setDuration(GetQTime(0.15))
+                    showPos.setEasingCurve(QEasingCurve.Type.InOutCubic)
+                    showPos.setLoopCount(1)
+
+                    dropContainer.showAnims.addAnimation(showOpacity)
+                    dropContainer.showAnims.addAnimation(showPos)
+
+                    dropContainer.lay = QVBoxLayout(dropContainer)
+                    dropContainer.lay.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
+                    dropContainer.lay.setContentsMargins(0, 0, 0, 0)
+                    dropContainer.lay.setSpacing(2)
+                    dropContainer.setLayout(dropContainer.lay)
+
+                    def changeValue(newValue):
+                        dropContainer.deleteLater()
+                        SettingsService.appendUserSettings("General", {optionData["key"]: newValue})
+                        connection.send(f"language:{newValue}")
+
+                    dropContainer.options = {}
+                    for value in optionData["options"]:
+                        optButton = QPushButton(text=value, parent=dropContainer)
+                        optButton.setObjectName("optionButton")
+                        optButton.setFixedSize(
+                            dropContainer.width() - 10,
+                            dropButton.height()
+                        )
+                        dropContainer.lay.addWidget(optButton)
+
+                        optButton.clicked.connect(lambda _, v=value: changeValue(v))
+
+                        dropContainer.options[value] = optButton
+                    
+                    dropContainer.setWindowFlags(Qt.WindowType.Popup)
+                    dropContainer.show()
+
+                    dropContainer.showAnims.start()
+
+                dropButton.clicked.connect(createDropContainer)
 
                 self.interContainer.lay.addWidget(dropButton)
             elif optionData["type"] == "slider":
@@ -585,10 +673,10 @@ def main(connection):
 
         def closeEvent(self, event):
             event.ignore()
-            self.Hide(onFinished=uiApp.exit, Hard=True)
+            # self.Hide(onFinished=uiApp.exit, Hard=True)
             return
 
-    generalSettingsWindow = GeneralSettingsWindow(titleKey="titles/generalSettings", name="GeneralSettings", Mode="blackList", Modifiers=["gsettings"])
+    generalSettingsWindow = GeneralSettingsWindow(titleKey="titles/generalSettings", name="GeneralSettings", Mode="blackList", Modifiers=["gsettings", "close"])
 
     # CODE -----------------------------------------------------------------------------------------------
 
@@ -602,9 +690,12 @@ def main(connection):
     def onMessage(msg: str):
         if isinstance(msg, str):
             if ":" not in msg: return
-            code, action = msg.split(":", 1)
-            if code == "code" and action in codeFunctions:
-                codeFunctions[action]()
+            prefix, affix = msg.split(":", 1)
+            if prefix == "code" and affix in codeFunctions:
+                codeFunctions[affix]()
+            elif prefix == "language":
+                LocalizationService.changeLanguage(affix, False)
+
 
     # -----------------------------------------------------------------------------------------------------
 
