@@ -364,7 +364,7 @@ def main(connection):
             self.show()
             self.stylizeWindow()
 
-            self.buttons["settingsButton"].setFixedWidth(100)
+            # self.buttons["settingsButton"].setFixedWidth(100)
 
             self.updateOptionsLayout()
 
