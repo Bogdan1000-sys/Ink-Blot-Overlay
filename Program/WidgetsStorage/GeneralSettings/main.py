@@ -242,6 +242,9 @@ def main(connection):
             self.showAnim.addAnimation(opacityAnim)
 
             LocalizationService.registerAdaptableText(self.nameLabel, optionData["name"])
+            
+            if settings.get(key):
+                currentValueLabel:QLabel
 
             if optionData["type"] == "dropdown":
                 dropButton = QPushButton(self)
@@ -302,6 +305,7 @@ def main(connection):
 
                     def changeValue(newValue):
                         dropContainer.deleteLater()
+                        currentValueLabel.setText(newValue)
                         SettingsService.appendUserSettings("General", {optionData["key"]: newValue})
                         connection.send(f"language:{newValue}")
 
@@ -331,15 +335,14 @@ def main(connection):
                 pass
             elif optionData["type"] == "dialogButton":
                 pass
+
+            if settings.get(key):
+                currentValueLabel = QLabel(text=str(settings[key]), parent=self.interContainer)
+                currentValueLabel.setObjectName("currentValueLabel")
+                currentValueLabel.setProperty("class", "interconElement")
+                currentValueLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                self.interContainer.lay.addWidget(currentValueLabel)
             
-            if not settings.get(key): return
-
-            currentValueLabel = QLabel(text=str(settings[key]), parent=self.interContainer)
-            currentValueLabel.setObjectName("currentValueLabel")
-            currentValueLabel.setProperty("class", "interconElement")
-            currentValueLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            self.interContainer.lay.addWidget(currentValueLabel)
-
 
 
     class GeneralSettingsWindow(ModifiedWindow):
