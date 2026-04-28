@@ -1,5 +1,5 @@
 from PyQt6.QtCore import Qt, QTimer, QPropertyAnimation, QEasingCurve, QMargins, QParallelAnimationGroup, QPoint
-from PyQt6.QtWidgets import QFrame, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QSizePolicy, QBoxLayout, QGraphicsOpacityEffect
+from PyQt6.QtWidgets import QFrame, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QSizePolicy, QBoxLayout, QGraphicsOpacityEffect, QSlider
 from PyQt6.QtGui import QPixmap
 import sys, json, random, os, math
 
@@ -130,12 +130,31 @@ OptionsStyle = """
 
     QPushButton#dropButton {
         width: 120px;
-
-        border-radius: 15px;
     }
 
     QPushButton#dropButton:hover {
         background: #000000;
+    }
+
+    QFrame#sliderContainer {
+        width: 120px;
+    }
+
+    QFrame#slider {
+        background: rgba(255, 106, 0, 255);
+        border-radius: 10px;
+    }
+    QFrame#sliderBackground {
+        background: rgba(13, 5, 0, 255);
+        border-radius: 10px;
+    }
+
+    QSlider::handle:horizontal#slider {
+        background: rgba(255, 106, 0, 255);
+        border-radius: 10px;
+    }
+    QSlider::groove:horizontal#slider {
+        background: rgba(56, 22, 0, 255);
     }
 
     QLabel#text {
@@ -181,16 +200,15 @@ def main(connection):
 
     uiApp = UIApplication(sys.argv, appName="GeneralSettingsApplication")
 
-    settings = SettingsService.getUserSettings().get("General", {})
     tree = SettingsService.getSettingsTree()
     chapter = list(tree.keys())[0]
     index = list(tree.keys()).index(chapter)
 
-    print("Chapter:", chapter, "Index:", index)
-
     class OptionContainer(QFrame):
         def __init__(self, parent=None, key=None):
             super().__init__(parent)
+
+            settings = SettingsService.getUserSettings().get("General", {})
 
             self._margins = QMargins(0, 0, 0, 0)
             self.setContentsMargins(self._margins)
@@ -332,7 +350,61 @@ def main(connection):
 
                 self.interContainer.lay.addWidget(dropButton)
             elif optionData["type"] == "slider":
-                pass
+
+                sliderContainer = QFrame(self)
+                sliderContainer.setObjectName("sliderContainer")
+                sliderContainer.setProperty("class", "interconElement")
+                sliderContainer.resize(120, 30)
+                
+                # -----------------
+                sliderContainer.sliderBackground = QFrame(sliderContainer)
+                sliderContainer.sliderBackground.setObjectName("sliderBackground")
+                sliderContainer.sliderBackground.resize(
+                    sliderContainer.width() - 10,
+                    sliderContainer.height() - 10
+                )
+                sliderContainer.sliderBackground.move(
+                    sliderContainer.x() + 5,
+                    sliderContainer.y() + 5
+                )
+
+                sliderContainer.slider = QSlider(Qt.Orientation.Horizontal, parent=sliderContainer)
+                sliderContainer.slider.setObjectName("slider")
+                sliderContainer.slider.resize(
+                    sliderContainer.width() - 10,
+                    sliderContainer.height() - 10
+                )
+                sliderContainer.slider.move(
+                    sliderContainer.x() + 5,
+                    sliderContainer.y() + 5
+                )
+                sliderContainer.slider.setMinimum(int(optionData["options"]["min"]*100))
+                sliderContainer.slider.setMaximum(int(optionData["options"]["max"]*100))
+                sliderContainer.slider.setValue(int(settings[key]*100))
+
+                # sliderContainer.slider = QFrame(sliderContainer)
+                # sliderContainer.slider.setObjectName("slider")
+              # # sliderContainer.slider.resize(
+              # #     sliderContainer.width() - 10,
+              # #     sliderContainer.height() - 10
+              # # )
+                # sliderContainer.slider.move(
+                #     sliderContainer.x() + 5,
+                #     sliderContainer.y() + 5
+                # )
+                # sliderContainer.slider.resize(
+                #     int(float(sliderContainer.width() - 10) * float(settings[key])),
+                #     sliderContainer.height() - 10
+                # )
+                # -----------------
+
+                # INTERACTION -------------------------------
+
+                margins = {"min": sliderContainer.x() + 5, "max": sliderContainer.x() + sliderContainer.width() - 5}
+
+                # -------------------------------------------
+
+                self.interContainer.lay.addWidget(sliderContainer)
             elif optionData["type"] == "dialogButton":
                 pass
 

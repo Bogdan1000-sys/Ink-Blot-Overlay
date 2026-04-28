@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame, QSlider
 from PyQt6.QtCore import Qt, QRectF, QPropertyAnimation, QParallelAnimationGroup, QPoint, QTimer, pyqtSignal, QEvent, QObject, QSize
-from PyQt6.QtGui import QPainter, QColor, QBrush, QPainterPath, QPixmap, QPen, QCursor, QMovie
+from PyQt6.QtGui import QPainter, QColor, QBrush, QPainterPath, QPixmap, QPen, QCursor, QMovie, QMouseEvent
 import subprocess, multiprocessing, keyboard, json, math, threading, os
 
 # -- Services --
@@ -1671,6 +1671,27 @@ class InteractableWindow(QMainWindow):
             self.minimizeButton.alignBehaviorY = None
 
         self.minimizeButton.move(x, y)
+
+    # ------------------- MOUSE DETECTION -------------------
+
+    class mouse:
+        @classmethod
+        def __init__(self): pass
+
+        @classmethod
+        def getXY(self):
+            return self.MouseXY
+        
+        @classmethod
+        def getRelativePosition(self):
+            return self.MouseRelativePosition
+
+    def mouseMoveEvent(self, event: QMouseEvent):
+        # event.position() returns the coordinates relative to the widget
+        self.mouse.MouseXY = {"x": event.position().x(), "y": event.position().y()}
+        self.mouse.MouseRelativePosition = event.position()
+        # print(self.mouse.MouseXY.get("x"), self.mouse.MouseXY.get("y"))
+
 
 class ModifiedWindow(InteractableWindow):
     def __init__(self, **kwargs):
