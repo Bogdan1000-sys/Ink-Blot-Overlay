@@ -170,12 +170,49 @@ OptionsStyle = """
         color: rgba(255, 106, 0, 255);
     }
 
+    QLabel#text1 {
+        background: transparent;
+        font-size: 18px;
+        font-family: 'Courier New', Courier, monospace;
+        color: rgba(255, 106, 0, 255);
+    }
+
     QLabel#currentValueLabel {
         min-width: 40px;
 
         font-size: 14px;
         font-family: 'Courier New', Courier, monospace;
         color: rgba(255, 106, 0, 255);
+    }
+
+    QPushButton#dialogButton {
+        width: 120px;
+
+        font-size: 14px;
+        font-family: 'Courier New', Courier, monospace;
+        color: rgba(255, 106, 0, 255);
+    }
+    QPushButton#dialogButton:hover {
+        background: #1f0d00;
+    }
+    QFrame#dialogContainer {
+        background: black;
+    }
+    QLabel#QuestionLabel {
+        width: 110px;
+        height: 30px;
+
+        background: transparent;
+        font-size: 14px;
+        font-family: 'Courier New', Courier, monospace;
+        color: rgba(255, 106, 0, 255);
+    }
+    QPushButton#dialogVariantButton {
+        border-radius: 5px;
+        background: #371800;
+    }
+    QPushButton#dialogVariantButton:hover {
+        background: #1f0d00;
     }
 
     QFrame#dropContainer {
@@ -394,22 +431,6 @@ def main(connection):
 
                 sliderContainer.slider.valueChanged.connect(changeValue)
 
-                # sliderContainer.slider = QFrame(sliderContainer)
-                # sliderContainer.slider.setObjectName("slider")
-              # # sliderContainer.slider.resize(
-              # #     sliderContainer.width() - 10,
-              # #     sliderContainer.height() - 10
-              # # )
-                # sliderContainer.slider.move(
-                #     sliderContainer.x() + 5,
-                #     sliderContainer.y() + 5
-                # )
-                # sliderContainer.slider.resize(
-                #     int(float(sliderContainer.width() - 10) * float(settings[key])),
-                #     sliderContainer.height() - 10
-                # )
-                # -----------------
-
                 # INTERACTION -------------------------------
 
                 margins = {"min": sliderContainer.x() + 5, "max": sliderContainer.x() + sliderContainer.width() - 5}
@@ -418,7 +439,98 @@ def main(connection):
 
                 self.interContainer.lay.addWidget(sliderContainer)
             elif optionData["type"] == "dialogButton":
-                pass
+                
+                dialogButton = QPushButton(text="< O >", parent=self.interContainer)
+                dialogButton.setObjectName("dialogButton")
+                dialogButton.setProperty("class", "interconElement")
+                self.interContainer.lay.addWidget(dialogButton)
+
+                def CreateDialog():
+                    dialogContainer = QFrame(self)
+                    dialogContainer.setObjectName("dialogContainer")
+                    dialogContainer.setProperty("class", "interconElement")
+
+                    dialogContainer.adjustSize()
+                    dialogContainer.setFixedWidth(dialogButton.width())
+
+                    targetPos = dialogButton.mapToGlobal(QPoint(0, dialogButton.height() + 2))
+                    dialogContainer.move(targetPos)
+
+                    dialogContainer.opacity = QGraphicsOpacityEffect()
+                    dialogContainer.opacity.setOpacity(0.0)
+
+                    dialogContainer.showAnims = QParallelAnimationGroup()
+
+                    showOpacity = QPropertyAnimation(dialogContainer.opacity, b"opacity")
+                    showOpacity.setStartValue(0.0)
+                    showOpacity.setEndValue(1.0)
+                    showOpacity.setDuration(GetQTime(0.15))
+                    showOpacity.setEasingCurve(QEasingCurve.Type.InOutCubic)
+                    showOpacity.setLoopCount(1)
+
+                    showPos = QPropertyAnimation(dialogContainer, b"pos")
+                    showPos.setStartValue(targetPos + QPoint(0, -10))
+                    showPos.setEndValue(targetPos)
+                    showPos.setDuration(GetQTime(0.15))
+                    showPos.setEasingCurve(QEasingCurve.Type.InOutCubic)
+                    showPos.setLoopCount(1)
+
+                    dialogContainer.showAnims.addAnimation(showOpacity)
+                    dialogContainer.showAnims.addAnimation(showPos)
+
+                    dialogContainer.lay = QVBoxLayout(dialogContainer)
+                    dialogContainer.lay.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+                    dialogContainer.lay.setContentsMargins(5, 5, 5, 5)
+                    dialogContainer.lay.setSpacing(2)
+                    dialogContainer.setLayout(dialogContainer.lay)
+
+                    dialogContainer.QuestionLabel = QLabel(text="[ Question ]", parent=dialogContainer); LocalizationService.registerAdaptableText(dialogContainer.QuestionLabel, optionData["options"]["question"])
+                    dialogContainer.QuestionLabel.setWordWrap(True)
+                    dialogContainer.QuestionLabel.setObjectName("QuestionLabel")
+                    dialogContainer.QuestionLabel.setProperty("class", "interconElement")
+                    dialogContainer.lay.addWidget(dialogContainer.QuestionLabel)
+
+                    # ------
+                    dialogContainer.PositiveButton = QPushButton(parent=dialogContainer);
+                    dialogContainer.PositiveButton.setObjectName("dialogVariantButton")
+                    dialogContainer.PositiveButton.setProperty("class", "interconElement")
+                    # --
+                    dialogContainer.PositiveButton.lay = QVBoxLayout()
+                    dialogContainer.PositiveButton.lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                    dialogContainer.PositiveButton.lay.setContentsMargins(0, 0, 0, 0)
+                    dialogContainer.PositiveButton.lay.setSpacing(0)
+                    dialogContainer.PositiveButton.setLayout(dialogContainer.PositiveButton.lay)
+                    # --
+                    dialogContainer.PositiveButton.textLabel = QLabel(text="YES", parent=dialogContainer.PositiveButton); LocalizationService.registerAdaptableText(dialogContainer.PositiveButton.textLabel, optionData["options"]["yes"])
+                    dialogContainer.PositiveButton.textLabel.setObjectName("text1")
+                    dialogContainer.PositiveButton.lay.addWidget(dialogContainer.PositiveButton.textLabel)
+                    dialogContainer.lay.addWidget(dialogContainer.PositiveButton)
+
+                    # ----------------------------
+
+                    dialogContainer.NegativeButton = QPushButton(parent=dialogContainer); # LocalizationService.registerAdaptableText(dialogContainer.NegativeButton, optionData["options"]["no"])
+                    dialogContainer.NegativeButton.setObjectName("dialogVariantButton")
+                    dialogContainer.NegativeButton.setProperty("class", "interconElement")
+                    dialogContainer.lay.addWidget(dialogContainer.NegativeButton)
+                     # --
+                    dialogContainer.NegativeButton.lay = QVBoxLayout()
+                    dialogContainer.NegativeButton.lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                    dialogContainer.NegativeButton.lay.setContentsMargins(0, 0, 0, 0)
+                    dialogContainer.NegativeButton.lay.setSpacing(0)
+                    dialogContainer.NegativeButton.setLayout(dialogContainer.NegativeButton.lay)
+                    # --
+                    dialogContainer.NegativeButton.textLabel = QLabel(text="NO", parent=dialogContainer.NegativeButton); LocalizationService.registerAdaptableText(dialogContainer.NegativeButton.textLabel, optionData["options"]["no"])
+                    dialogContainer.NegativeButton.textLabel.setObjectName("text1")
+                    dialogContainer.NegativeButton.lay.addWidget(dialogContainer.NegativeButton.textLabel)
+                    dialogContainer.lay.addWidget(dialogContainer.NegativeButton)
+                    # ------
+                    dialogContainer.setWindowFlags(Qt.WindowType.Popup)
+                    dialogContainer.show()
+
+                    dialogContainer.showAnims.start()
+                
+                dialogButton.clicked.connect(CreateDialog)
+
 
             if settings.get(key) != None:
                 currentValueLabel = QLabel(text=str(settings[key]), parent=self.interContainer)
