@@ -148,13 +148,18 @@ OptionsStyle = """
         background: rgba(13, 5, 0, 255);
         border-radius: 10px;
     }
-
-    QSlider::handle:horizontal#slider {
-        background: rgba(255, 106, 0, 255);
+    
+    QSlider#slider {
+        background: rgb(56, 22, 0);
         border-radius: 10px;
     }
+    QSlider::handle:horizontal#slider {
+        background: rgb(255, 106, 0);
+        border-radius: 10px;
+        width: 20px;
+    }
     QSlider::groove:horizontal#slider {
-        background: rgba(56, 22, 0, 255);
+        background: rgb(56, 22, 0);
     }
 
     QLabel#text {
@@ -203,7 +208,7 @@ def main(connection):
     tree = SettingsService.getSettingsTree()
     chapter = list(tree.keys())[0]
     index = list(tree.keys()).index(chapter)
-
+    
     class OptionContainer(QFrame):
         def __init__(self, parent=None, key=None):
             super().__init__(parent)
@@ -325,7 +330,7 @@ def main(connection):
                         dropContainer.deleteLater()
                         currentValueLabel.setText(newValue)
                         SettingsService.appendUserSettings("General", {optionData["key"]: newValue})
-                        connection.send(f"language:{newValue}")
+                        if optionData["key"] == "language": connection.send(f"language:{newValue}")
 
                     dropContainer.options = {}
                     for value in optionData["options"]:
@@ -382,6 +387,13 @@ def main(connection):
                 sliderContainer.slider.setMaximum(int(optionData["options"]["max"]*100))
                 sliderContainer.slider.setValue(int(settings[key]*100))
 
+                def changeValue(newValue): 
+                    newValue = float(newValue/100)
+                    currentValueLabel.setText(str(newValue))
+                    SettingsService.appendUserSettings("General", {optionData["key"]: newValue})
+
+                sliderContainer.slider.valueChanged.connect(changeValue)
+
                 # sliderContainer.slider = QFrame(sliderContainer)
                 # sliderContainer.slider.setObjectName("slider")
               # # sliderContainer.slider.resize(
@@ -408,7 +420,7 @@ def main(connection):
             elif optionData["type"] == "dialogButton":
                 pass
 
-            if settings.get(key):
+            if settings.get(key) != None:
                 currentValueLabel = QLabel(text=str(settings[key]), parent=self.interContainer)
                 currentValueLabel.setObjectName("currentValueLabel")
                 currentValueLabel.setProperty("class", "interconElement")
@@ -537,8 +549,8 @@ def main(connection):
             elementWidth = self.mainContainer.width() - 14
             elementHeights = {
                 "NavigationContainer": int(float(self.mainContainer.height())*0.06),
-                "OptionsContainer": int(float(self.mainContainer.height())*0.83),
-                "ButtonsContainer": int(float(self.mainContainer.height())*0.07)
+                "OptionsContainer": int(float(self.mainContainer.height())*0.90), # 0.87
+                # "ButtonsContainer": int(float(self.mainContainer.height())*0.07)
             }
 
             # NAVIGATION ---------------------------------------------------------------------------------------------
@@ -698,60 +710,60 @@ def main(connection):
             self.elements["OptionsContainer"].setLayout(self.elements["OptionsContainer"].lay)
 
 
-            # BUTTONS ---------------------------------------------------------------------------------------------
+            # RESULT BUTTONS [ DEPRECATED ] ---------------------------------------------------------------------------------------------
 
-            self.elements["ButtonsContainer"] = QFrame(self.mainContainer)
-            self.elements["ButtonsContainer"].setProperty("class", "ButtonsContainer")
-            self.elements["ButtonsContainer"].setFixedWidth(elementWidth)
-            self.elements["ButtonsContainer"].setFixedHeight(elementHeights["ButtonsContainer"])
-            self.mainContainer.mainLayout.addWidget(self.elements["ButtonsContainer"])
-            self.elements["ButtonsContainer"].show()
+            # self.elements["ButtonsContainer"] = QFrame(self.mainContainer)
+            # self.elements["ButtonsContainer"].setProperty("class", "ButtonsContainer")
+            # self.elements["ButtonsContainer"].setFixedWidth(elementWidth)
+            # self.elements["ButtonsContainer"].setFixedHeight(elementHeights["ButtonsContainer"])
+            # self.mainContainer.mainLayout.addWidget(self.elements["ButtonsContainer"])
+            # self.elements["ButtonsContainer"].show()
 
-            self.elements["ButtonsContainer"].lay = QVBoxLayout()
-            self.elements["ButtonsContainer"].lay.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
-            self.elements["ButtonsContainer"].lay.setSpacing(5)
-            self.elements["ButtonsContainer"].lay.setContentsMargins(0,0,0,0)
-            self.elements["ButtonsContainer"].lay.setDirection(QBoxLayout.Direction.LeftToRight)
-            self.elements["ButtonsContainer"].setLayout(self.elements["ButtonsContainer"].lay)
+            # self.elements["ButtonsContainer"].lay = QVBoxLayout()
+            # self.elements["ButtonsContainer"].lay.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
+            # self.elements["ButtonsContainer"].lay.setSpacing(5)
+            # self.elements["ButtonsContainer"].lay.setContentsMargins(0,0,0,0)
+            # self.elements["ButtonsContainer"].lay.setDirection(QBoxLayout.Direction.LeftToRight)
+            # self.elements["ButtonsContainer"].setLayout(self.elements["ButtonsContainer"].lay)
 
-            def CreateResultButton(key: str):
-                button = QPushButton(parent=self.elements["ButtonsContainer"])
-                button.setProperty("class", "Button")
-                button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+            # def CreateResultButton(key: str):
+            #     button = QPushButton(parent=self.elements["ButtonsContainer"])
+            #     button.setProperty("class", "Button")
+            #     button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
-                button.label = QLabel("[ Missing ]", parent=button)
-                button.label.setProperty("class", "ButtonLabel")
-                button.label.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
-                button.label.setWordWrap(True)
-                button.label.setMinimumWidth(1)
-                button.label.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
-                button.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            #     button.label = QLabel("[ Missing ]", parent=button)
+            #     button.label.setProperty("class", "ButtonLabel")
+            #     button.label.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
+            #     button.label.setWordWrap(True)
+            #     button.label.setMinimumWidth(1)
+            #     button.label.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
+            #     button.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-                LocalizationService.registerAdaptableText(button.label, f"buttons/{key}")    
+            #     LocalizationService.registerAdaptableText(button.label, f"buttons/{key}")    
 
-                button.lay = QVBoxLayout(button)
-                button.lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
-                button.lay.addWidget(button.label)
-                button.lay.setContentsMargins(0, 0, 0, 0)
+            #     button.lay = QVBoxLayout(button)
+            #     button.lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            #     button.lay.addWidget(button.label)
+            #     button.lay.setContentsMargins(0, 0, 0, 0)
                 
-                return button
+            #     return button
             
-            self.scButtons = {}
+            # self.scButtons = {}
 
-            self.scButtons["cancel"] = CreateResultButton("cancel")
-            self.scButtons["cancel"].setMaximumWidth(self.mainContainer.width()//3)
-            self.elements["ButtonsContainer"].lay.addWidget(self.scButtons["cancel"])
+            # self.scButtons["cancel"] = CreateResultButton("cancel")
+            # self.scButtons["cancel"].setMaximumWidth(self.mainContainer.width()//3)
+            # self.elements["ButtonsContainer"].lay.addWidget(self.scButtons["cancel"])
 
-            self.scButtons["apply"] = CreateResultButton("apply")
-            self.elements["ButtonsContainer"].lay.addWidget(self.scButtons["apply"])
+            # self.scButtons["apply"] = CreateResultButton("apply")
+            # self.elements["ButtonsContainer"].lay.addWidget(self.scButtons["apply"])
 
 
         def closeEvent(self, event):
             event.ignore()
-            # self.Hide(onFinished=uiApp.exit, Hard=True)
+            self.Hide(onFinished=uiApp.exit, Hard=True)
             return
 
-    generalSettingsWindow = GeneralSettingsWindow(titleKey="titles/generalSettings", name="GeneralSettings", Mode="blackList", Modifiers=["gsettings", "close"])
+    generalSettingsWindow = GeneralSettingsWindow(titleKey="titles/generalSettings", name="GeneralSettings", Mode="blackList", Modifiers=["gsettings"])
 
     # CODE -----------------------------------------------------------------------------------------------
 

@@ -1399,9 +1399,7 @@ class InteractableWindow(QMainWindow):
         return super().mouseReleaseEvent(event)
 
     def mouseMoveEvent(self, event):
-        if (event.buttons() == Qt.MouseButton.LeftButton
-            and keyboard.is_pressed('alt')
-            and self._data["dragPos"] is not None):
+        if (event.buttons() == Qt.MouseButton.LeftButton and keyboard.is_pressed('alt') and self._data["dragPos"] is not None):
             current_pos = event.globalPosition().toPoint()
             delta = current_pos - self._data["dragPos"]
             self.move(self.x() + int(delta.x()), self.y() + int(delta.y()))
@@ -1671,26 +1669,6 @@ class InteractableWindow(QMainWindow):
             self.minimizeButton.alignBehaviorY = None
 
         self.minimizeButton.move(x, y)
-
-    # ------------------- MOUSE DETECTION -------------------
-
-    class mouse:
-        @classmethod
-        def __init__(self): pass
-
-        @classmethod
-        def getXY(self):
-            return self.MouseXY
-        
-        @classmethod
-        def getRelativePosition(self):
-            return self.MouseRelativePosition
-
-    def mouseMoveEvent(self, event: QMouseEvent):
-        # event.position() returns the coordinates relative to the widget
-        self.mouse.MouseXY = {"x": event.position().x(), "y": event.position().y()}
-        self.mouse.MouseRelativePosition = event.position()
-        # print(self.mouse.MouseXY.get("x"), self.mouse.MouseXY.get("y"))
 
 
 class ModifiedWindow(InteractableWindow):
